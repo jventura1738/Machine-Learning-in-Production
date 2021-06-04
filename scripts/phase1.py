@@ -21,7 +21,15 @@ out an effective way to scrape.  Brute forcing is not
 an option since it would require human validation which
 is astronomically slow, and painful.
 
-IDEAS: ???
+IDEAS:
+
+1) possibly a scoring system to rank repos found based
+   on keywords (in desc/readme), topics (if any), number
+   of stars, contributors, and forks, and potentially
+   check through source code for signs of ML/AI.  Maybe
+   look for inclusion of libraries.  Still need to find
+   a way to filter out libraries, projects, frameworks,
+   etc.
 """
 
 # TODO: perform a basic search through tags using kws.
