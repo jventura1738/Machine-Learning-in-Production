@@ -3,11 +3,12 @@
 # Libraries:
 import os
 import sys
+import csv
 import stscraper as scraper
 
 # IMPORTANT: CONSTANTS
 TOKENS = os.getenv('GITHUB_API_TOKENS', default=None)
-FIELDS = ['category', 'gh_id', 'name', 'full_name', 'owner',
+FIELDS = ['category', 'gh_id', 'name', 'full_name', #'owner',
           'desc', 'created', 'last_update', 'size', 'forks',
           'stars', 'language']
 
@@ -15,6 +16,18 @@ FIELDS = ['category', 'gh_id', 'name', 'full_name', 'owner',
 Short script for direct access to GitHub repos via
 the GitHub API.
 """
+
+
+def write_to_csv(data_list):
+    csv_file = "repo_data.csv"
+    try:
+        with open(csv_file, 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=FIELDS)
+            writer.writeheader()
+            for data in data_list:
+                writer.writerow(data)
+    except IOError:
+        print('IO Error.')
 
 
 # Main script:
@@ -31,21 +44,9 @@ def _main():
 
         # NOTE: format as <username/repository_name>
         targ_slug = str(repo_name)
-        # choice = str(input('Write to file? y/n'))
-        # assert(choice == 'y' or choice == 'n'), 'y/n'
 
         # Scrape and store here:
         targ_info = gh_api.repo_info(targ_slug)
-
-        # if choice == 'y':
-        #     # Create/write to the file.  Will overwrite!
-        #     mid = targ_slug.index('/')
-        #     fp = open(f'{targ_slug[mid + 1:]}.txt', 'w')
-        #
-        #     # noinspection PyUnresolvedReferences
-        #     for k, v in targ_info.items():
-        #         fp.write(f'{k}: {v}\n')
-        #     fp.close()
 
         # This is where useful data is stored:
         df_data = dict()
@@ -65,11 +66,9 @@ def _main():
         df_data['stars'] = targ_info['stargazers_count']
         # df_data['contributors'] = targ_info['name']
         df_data['language'] = targ_info['language']
-
         data_list.append(df_data)
 
-    for d in data_list:
-        print(d, end='\n\n')
+    write_to_csv(data_list)
 
 
 # Ensure directly running the script; not a module.
