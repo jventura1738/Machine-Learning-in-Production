@@ -15,6 +15,9 @@ FIELDS = ['category', 'gh_id', 'name', 'full_name', #'owner',
 """
 Short script for direct access to GitHub repos via
 the GitHub API.
+
+HOW TO RUN:
+> python3 direct.py `cat repo_names`
 """
 
 
