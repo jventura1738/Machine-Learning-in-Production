@@ -20,7 +20,7 @@ HOW TO RUN:
 > python3 direct.py `cat repo_names`
 """
 
-
+# Write repo data to csv:
 def write_to_csv(data_list):
     csv_file = "repo_data.csv"
     try:

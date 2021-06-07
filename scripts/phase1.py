@@ -32,9 +32,14 @@ IDEAS:
    etc.
 """
 
+
+def search_v1():
+    pass
+
+
 # TODO: perform a basic search through tags using kws.
 def _main():
-    pass
+    _ = search_v1()
 
 
 if __name__ == '__main__':
