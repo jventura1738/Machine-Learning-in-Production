@@ -1,5 +1,6 @@
 # Justin Ventura | Carnegie Mellon University
 
+import stscraper as scraper
 from RepositoryInfo import RepositoryInfo as Repo
 
 """
@@ -19,15 +20,38 @@ PLAN OF CLASSIFICATION:
 - Justin Ventura
 """
 
+# TODO: start with primitive classification.
 
 # Classifier class:
 class BetaClassifier:
 
     # Initialize the classifier.
     def __init__(self):
+        self.score = 10            # Current score for repo.
         self._num_classified = 0   # Total num ranked.
         self._num_negated = 0      # Negate miserable scores.
 
+
     # IMPORTANT: THIS IS THE CLASSIFICATION 'ALGORITHM'
     def classify(self, repo: Repo) -> None:
+        """This will classify the given Repo.
+
+        :param repo: RepositoryInfo class dubbed Repo.
+        :return: None, modifies repo.
+        """
+        # TODO: SCRAPE DESCRIPTION.
+
+        # TODO: SCRAPE README.
+
+        # TODO: CHECK TOPICS.
+
+        # TODO: CHECK LICENSE (experimental)
         pass
+
+    # Sub-method for scoring based on description:
+    @staticmethod
+    def _scrape_desc(self, desc=None) -> int:
+        if desc is None:
+            self.score -= 2
+        else:
+            pass

@@ -67,7 +67,7 @@ def _main():
         df_data['size'] = targ_info['size']
         df_data['forks'] = targ_info['forks']
         df_data['stars'] = targ_info['stargazers_count']
-        # df_data['contributors'] = targ_info['name']
+        df_data['license'] = targ_info['license']
         df_data['language'] = targ_info['language']
         data_list.append(df_data)
 
