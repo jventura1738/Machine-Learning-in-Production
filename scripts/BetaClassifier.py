@@ -1,5 +1,6 @@
 # Justin Ventura | Carnegie Mellon University
 
+import re
 import stscraper as scraper
 from RepositoryInfo import RepositoryInfo as Repo
 
@@ -10,7 +11,35 @@ time.
 
 PLAN OF CLASSIFICATION:
     1) give a score based on criteria (adjust as needed)
-    2) classify as such:
+
+    2) Explanations as of now:
+        a) DESCRIPTION:
+            - If there is none, subtract 3 points. This
+              seems not to be software from experience.
+            - If the description contains a word in the
+              list [API, framework, toolkit, tool, lib
+              library, platform, project, course], then
+              subtract points off.  From my experience,
+              these are huge red flags.
+            - If the description has any words in the
+              list [software, system, application] then
+              add some points.
+        b) HOMEPAGE: If there is a home page, add a few
+           points as this is typically indicative of
+           being some sort of software system, usually
+           a web app.
+        c) README:
+            - If any of the above words from the first
+              list are found, take away points, but not
+              as many.
+        d) TOPICS:
+            - If one of the topics is in the following
+              list [API, framework, library, toolkit,
+              tool] then take off points.
+        e) LICENSE:
+            - If there is no license, take off a point.
+
+    3) classify as such:
         a) negative score -> 'REJECT'
         b) score btwn 1-6 -> 'WARNING'
         c) score btwn 7-9 -> 'UNSURE'
@@ -20,7 +49,18 @@ PLAN OF CLASSIFICATION:
 - Justin Ventura
 """
 
+# NOTE: Keyword lists for regex.
+BAD_KEYWORDS = ['API', 'framework', 'toolkit', 'tool', 'lib',
+                'library', 'platform', 'project', 'course']
+BAD_KEYWORDS2 = ['API', 'framework', 'library', 'toolkit',
+                 'tool']
+GOOD_KEYWORDS = ['software',
+                 'system',
+                 'application',
+                 'service']
+
 # TODO: start with primitive classification.
+
 
 # Classifier class:
 class BetaClassifier:
@@ -31,27 +71,89 @@ class BetaClassifier:
         self._num_classified = 0   # Total num ranked.
         self._num_negated = 0      # Negate miserable scores.
 
-
     # IMPORTANT: THIS IS THE CLASSIFICATION 'ALGORITHM'
-    def classify(self, repo: Repo) -> None:
+    def classify(self, repo: Repo, verbose: bool = False) -> None:
         """This will classify the given Repo.
 
         :param repo: RepositoryInfo class dubbed Repo.
+        :param verbose: Verbosity for debugging.
         :return: None, modifies repo.
         """
+        info = repo.info()
+
         # TODO: SCRAPE DESCRIPTION.
+        if verbose:
+            print(info[0])
+        self._scrape_desc(desc=info[0])
+
+        # TODO: CHECK IF THERE IS A HOMEPAGE.
+        if verbose:
+            print(info[1])
+        self._check_homepage(homepage=info[1])
 
         # TODO: SCRAPE README.
+        if verbose:
+            print(info[2])
+        self._scrape_readme(full_name=info[2])
 
         # TODO: CHECK TOPICS.
+        if verbose:
+            print(info[3])
+        self._scrape_topics(topics=info[3])
 
         # TODO: CHECK LICENSE (experimental)
-        pass
+        if verbose:
+            print(info[4])
+        self._check_license(lic=info[4])
+
+        # Now apply the score acquired.
+        self._apply_score(repo=repo)
+
+        # Prepare for next classification.
+        self._num_classified += 1
+        self._num_negated += 1 if self.score < 0 else 0
+        self.score = 10
 
     # Sub-method for scoring based on description:
-    @staticmethod
-    def _scrape_desc(self, desc=None) -> int:
+    # @staticmethod
+    def _scrape_desc(self, desc=None) -> None:
         if desc is None:
             self.score -= 2
         else:
-            pass
+            if any(kw in desc for kw in BAD_KEYWORDS):
+                self.score -= 5
+
+            if any(kw in desc for kw in GOOD_KEYWORDS):
+                self.score += 2
+
+    # Sub-method for scoring based on license.
+    def _check_homepage(self, homepage) -> None:
+        self.score += 2 if homepage else 0
+
+    # Sub-method for scoring based on README.
+    @staticmethod
+    def _scrape_readme(full_name) -> None:
+        assert(full_name is not None), 'No full_name provided.'
+
+    # Sub-method for scoring based on topics.
+    def _scrape_topics(self, topics) -> None:
+        if any(kw in topics for kw in BAD_KEYWORDS2):
+            self.score -= 5
+
+    # Sub-method for scoring based on license.
+    def _check_license(self, lic) -> None:
+        self.score -= 0 if lic else 1
+
+    # Sub-method for giving a score to the repo.
+    def _apply_score(self, repo: Repo) -> None:
+        rank = 'CHECK'
+        if self.score < 0:
+            rank = 'REJECT'
+        elif 0 <= self.score <= 6:
+            rank = 'WARNING'
+        elif 7 <= self.score <= 9:
+            rank = 'UNSURE'
+        elif self.score > 10:
+            'LIKELY'
+
+        repo.apply_rank(self.score, rank)

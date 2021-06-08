@@ -22,9 +22,10 @@ class RepositoryInfo:
     # NOTE: the classification algorithm.
     def info(self):
         return [
-            self._info['full_name'],  # Used to scrape README.
             self._info['desc'],       # Used to search keywords.
-            self._info['topics'],     # Same as above.
+            self._info['homepage'],  # Check if homepage.
+            self._info['full_name'],  # Used to scrape README.
+            self._info['topics'],     # Same as above desc.
             self._info['license'],    # Experimental.
         ]
 

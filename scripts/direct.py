@@ -8,9 +8,9 @@ import stscraper as scraper
 
 # IMPORTANT: CONSTANTS
 TOKENS = os.getenv('GITHUB_API_TOKENS', default=None)
-FIELDS = ['category', 'gh_id', 'name', 'full_name', #'owner',
+FIELDS = ['category', 'gh_id', 'name', 'full_name',  # 'owner',
           'desc', 'created', 'last_update', 'size', 'forks',
-          'stars', 'language']
+          'stars', 'language', 'homepage', 'license', 'topics']
 
 """
 Short script for direct access to GitHub repos via
@@ -19,6 +19,7 @@ the GitHub API.
 HOW TO RUN:
 > python3 direct.py `cat repo_names`
 """
+
 
 # Write repo data to csv:
 def write_to_csv(data_list):
@@ -65,6 +66,8 @@ def _main():
         # df_data['last_commit'] = targ_info['updated_at']
         df_data['last_update'] = targ_info['updated_at']
         df_data['size'] = targ_info['size']
+        df_data['homepage'] = targ_info['homepage']
+        df_data['topics'] = targ_info['topics']
         df_data['forks'] = targ_info['forks']
         df_data['stars'] = targ_info['stargazers_count']
         df_data['license'] = targ_info['license']
