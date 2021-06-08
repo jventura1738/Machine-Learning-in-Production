@@ -1,1 +1,0 @@
-# Justin Ventura | Carnegie Mellon University
