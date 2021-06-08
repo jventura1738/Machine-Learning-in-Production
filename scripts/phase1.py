@@ -33,6 +33,7 @@ IDEAS:
 """
 
 
+# This is the first version of the search.
 def search_v1():
     pass
 
@@ -42,5 +43,6 @@ def _main():
     _ = search_v1()
 
 
+# Run script directly.
 if __name__ == '__main__':
     _main()
