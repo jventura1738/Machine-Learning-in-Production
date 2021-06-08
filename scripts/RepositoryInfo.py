@@ -8,14 +8,15 @@ the class in which the Classifier considers it
 to be in.
 """
 
+DEFAULT = 8
 
 # RepositoryInfo class for high level interaction:
 class RepositoryInfo:
 
     # Initialize the repository:
     def __init__(self, repo_info: Dict = None):
-        self._score = 10    # Default is 10, may change.
-        self._label = None  # Decided by classifier.
+        self._score = DEFAULT    # Default may change.
+        self._label = None       # Decided by classifier.
         self._info = repo_info
 
     # NOTE: This returns the actual info I care about in
@@ -27,6 +28,7 @@ class RepositoryInfo:
             self._info['full_name'],  # Used to scrape README.
             self._info['topics'],     # Same as above desc.
             self._info['license'],    # Experimental.
+            self._info['language'],   # Experimental.
         ]
 
     # Apply ranking to the repository:

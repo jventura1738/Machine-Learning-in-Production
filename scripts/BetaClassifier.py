@@ -3,6 +3,7 @@
 import re
 import stscraper as scraper
 from RepositoryInfo import RepositoryInfo as Repo
+from RepositoryInfo import DEFAULT
 
 """
 This is a prototype classifier to begin some
@@ -36,8 +37,10 @@ PLAN OF CLASSIFICATION:
             - If one of the topics is in the following
               list [API, framework, library, toolkit,
               tool] then take off points.
-        e) LICENSE:
+        e) LICENSE (experimental):
             - If there is no license, take off a point.
+        f) LANGUAGE (experimental):
+            - If Jupyter Notebook > 50%, take off 4 pts.
 
     3) classify as such:
         a) negative score -> 'REJECT'
@@ -54,24 +57,22 @@ BAD_KEYWORDS = ['API', 'framework', 'toolkit', 'tool', 'lib',
                 'library', 'platform', 'project', 'course']
 BAD_KEYWORDS2 = ['API', 'framework', 'library', 'toolkit',
                  'tool']
-GOOD_KEYWORDS = ['software',
-                 'system',
-                 'application',
-                 'service']
-
-# TODO: start with primitive classification.
-
+GOOD_KEYWORDS = ['software', 'system', 'application', 'service',
+                 'powered']
+GOOD_KEYWORDS2 = ['machine-learning', 'artificial-intelligence',
+                  'ai', 'neural-networks', 'deep-learning']
 
 # Classifier class:
 class BetaClassifier:
 
     # Initialize the classifier.
     def __init__(self):
-        self.score = 10            # Current score for repo.
+        self.score = DEFAULT       # Current score for repo.
         self._num_classified = 0   # Total num ranked.
         self._num_negated = 0      # Negate miserable scores.
 
     # IMPORTANT: THIS IS THE CLASSIFICATION 'ALGORITHM'
+    # NOTE: ENSURE KEYWORDS ARE LOWER CASED IN PREPROCESSING!
     def classify(self, repo: Repo, verbose: bool = False) -> None:
         """This will classify the given Repo.
 
@@ -81,12 +82,10 @@ class BetaClassifier:
         """
         info = repo.info()
 
-        # TODO: SCRAPE DESCRIPTION.
         if verbose:
             print(info[0])
         self._scrape_desc(desc=info[0])
 
-        # TODO: CHECK IF THERE IS A HOMEPAGE.
         if verbose:
             print(info[1])
         self._check_homepage(homepage=info[1])
@@ -96,15 +95,17 @@ class BetaClassifier:
             print(info[2])
         self._scrape_readme(full_name=info[2])
 
-        # TODO: CHECK TOPICS.
         if verbose:
             print(info[3])
         self._scrape_topics(topics=info[3])
 
-        # TODO: CHECK LICENSE (experimental)
         if verbose:
             print(info[4])
         self._check_license(lic=info[4])
+
+        if verbose:
+            print(info[5])
+        self._check_lang(lang=info[5])
 
         # Now apply the score acquired.
         self._apply_score(repo=repo)
@@ -112,7 +113,7 @@ class BetaClassifier:
         # Prepare for next classification.
         self._num_classified += 1
         self._num_negated += 1 if self.score < 0 else 0
-        self.score = 10
+        self.score = DEFAULT
 
     # Sub-method for scoring based on description:
     # @staticmethod
@@ -126,7 +127,7 @@ class BetaClassifier:
             if any(kw in desc for kw in GOOD_KEYWORDS):
                 self.score += 2
 
-    # Sub-method for scoring based on license.
+    # Sub-method for scoring based on homepage.
     def _check_homepage(self, homepage) -> None:
         self.score += 2 if homepage else 0
 
@@ -140,9 +141,16 @@ class BetaClassifier:
         if any(kw in topics for kw in BAD_KEYWORDS2):
             self.score -= 5
 
+        if all(kw not in topics for kw in GOOD_KEYWORDS2):
+            self.score -= 3
+
     # Sub-method for scoring based on license.
     def _check_license(self, lic) -> None:
         self.score -= 0 if lic else 1
+
+    # Sub-method for scoring based on language.
+    def _check_lang(self, lang) -> None:
+        self.score -= 4 if lang == 'jupyter notebook' else 0
 
     # Sub-method for giving a score to the repo.
     def _apply_score(self, repo: Repo) -> None:
@@ -154,6 +162,6 @@ class BetaClassifier:
         elif 7 <= self.score <= 9:
             rank = 'UNSURE'
         elif self.score > 10:
-            'LIKELY'
+            rank = 'LIKELY'
 
         repo.apply_rank(self.score, rank)
