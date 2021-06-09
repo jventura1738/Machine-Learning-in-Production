@@ -60,14 +60,14 @@ PLAN OF CLASSIFICATION:
 BAD_KEYWORDS = ['api', 'framework', 'toolkit', 'tool', 'lib',
                 'library', 'platform', 'project', 'course',
                 'examples', 'guideline', 'guidelines',
-                'tutorial', 'package']
+                'tutorial', 'package', 'learn']
 BAD_KEYWORDS2 = ['api', 'framework', 'library', 'toolkit',
-                 'tool']
+                 'tool', 'course', 'class', 'tutorial']
 BAD_KEYWORDS3 = ['toolkit', 'framework',
                  'homework', 'homeworks', 'platform',
                  'reference', 'package']
 GOOD_KEYWORDS = ['software', 'system', 'application', 'service',
-                 'powered by']
+                 'powered by', 'app']
 GOOD_KEYWORDS2 = ['machine-learning', 'artificial-intelligence',
                   'ai', 'neural-networks', 'deep-learning']
 GOOD_KEYWORDS3 = ['machine learning', 'artificial intelligence',
@@ -134,7 +134,7 @@ class BetaClassifier:
             self.score -= 2
         else:
             if any(kw in desc for kw in BAD_KEYWORDS):
-                self.score -= 5
+                self.score -= 6
 
             if any(kw in desc for kw in GOOD_KEYWORDS):
                 self.score += 2
@@ -183,7 +183,10 @@ class BetaClassifier:
 
     # Sub-method for scoring based on language.
     def _check_lang(self, lang) -> None:
-        self.score -= 4 if lang == 'jupyter notebook' else 0
+        if lang is None:
+            self.score -= 10
+        else:
+            self.score -= 4 if lang == 'jupyter notebook' else 0
 
     # Sub-method for giving a score to the repo.
     def _apply_score(self, repo: Repo) -> None:

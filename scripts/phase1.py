@@ -72,7 +72,10 @@ def search_v1(demo: bool = False) -> None:
             repo_info['forks'] = targ_info['forks']
             repo_info['stars'] = targ_info['stargazers_count']
             repo_info['license'] = targ_info['license']
-            repo_info['language'] = targ_info['language'].lower()
+            if targ_info['language'] is not None:
+                repo_info['language'] = targ_info['language'].lower()
+            else:
+                repo_info['language'] = None
 
             repo_list.append(Repo(repo_info=repo_info))
 
