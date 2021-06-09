@@ -81,7 +81,6 @@ def search_v1(demo: bool = False) -> None:
             Lambda.classify(repo, verbose=False)
             print(f'{repo.full_info()["full_name"]}: {repo.ranking()}')
             print('-'*30)
-            time.sleep(1)
 
     # NOTE: This is for the real prototype:
     else:

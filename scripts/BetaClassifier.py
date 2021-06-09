@@ -1,9 +1,13 @@
 # Justin Ventura | Carnegie Mellon University
 
 import re
+import sys
+import time
 import stscraper as scraper
 from RepositoryInfo import RepositoryInfo as Repo
 from RepositoryInfo import DEFAULT
+
+import requests
 
 """
 This is a prototype classifier to begin some
@@ -53,14 +57,23 @@ PLAN OF CLASSIFICATION:
 """
 
 # NOTE: Keyword lists for regex.
-BAD_KEYWORDS = ['API', 'framework', 'toolkit', 'tool', 'lib',
-                'library', 'platform', 'project', 'course']
-BAD_KEYWORDS2 = ['API', 'framework', 'library', 'toolkit',
+BAD_KEYWORDS = ['api', 'framework', 'toolkit', 'tool', 'lib',
+                'library', 'platform', 'project', 'course',
+                'examples', 'guideline', 'guidelines',
+                'tutorial', 'package']
+BAD_KEYWORDS2 = ['api', 'framework', 'library', 'toolkit',
                  'tool']
+BAD_KEYWORDS3 = ['toolkit', 'framework',
+                 'homework', 'homeworks', 'platform',
+                 'reference', 'package']
 GOOD_KEYWORDS = ['software', 'system', 'application', 'service',
-                 'powered']
+                 'powered by']
 GOOD_KEYWORDS2 = ['machine-learning', 'artificial-intelligence',
                   'ai', 'neural-networks', 'deep-learning']
+GOOD_KEYWORDS3 = ['machine learning', 'artificial intelligence',
+                  'ai', 'neural networks', 'deep learning']
+GOOD_KEYWORDS4 = ['download', 'production', 'software',
+                  'powered by']
 
 # Classifier class:
 class BetaClassifier:
@@ -90,7 +103,6 @@ class BetaClassifier:
             print(info[1])
         self._check_homepage(homepage=info[1])
 
-        # TODO: SCRAPE README.
         if verbose:
             print(info[2])
         self._scrape_readme(full_name=info[2])
@@ -132,9 +144,30 @@ class BetaClassifier:
         self.score += 2 if homepage else 0
 
     # Sub-method for scoring based on README.
-    @staticmethod
-    def _scrape_readme(full_name) -> None:
+    def _scrape_readme(self, full_name) -> None:
         assert(full_name is not None), 'No full_name provided.'
+
+        r = requests.get(f'https://github.com/{full_name}/blob/master/README.md')
+
+        for kw in BAD_KEYWORDS3:
+            if self._in_readme(kw=kw, readme=r.text):
+                print(f'{kw} found, deducting 2 points.')
+                self.score -= 2
+                continue
+
+        for kw in GOOD_KEYWORDS4:
+            if self._in_readme(kw=kw, readme=r.text):
+                print(f'{kw} found, adding 1 point.')
+                self.score += 1
+                continue
+
+        del r
+
+    # Sub-method for regex in README to find bad keywords.
+    @staticmethod
+    def _in_readme(kw: str, readme: str) -> bool:
+        p = re.compile(f' ({kw})', re.IGNORECASE)
+        return True if p.search(readme) else False
 
     # Sub-method for scoring based on topics.
     def _scrape_topics(self, topics) -> None:
