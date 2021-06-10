@@ -35,11 +35,11 @@ def _main():
     results = search_github(keywords)
     fptr = open('repo_names2', 'w')
     for i, repo in enumerate(results):
-        if repo.updated_at <= CUTOFF:
+        if repo.pushed_at <= CUTOFF:
             i -= 1
             continue
         fptr.write(repo.full_name+'\n')
-        if i == 100:
+        if i == 500:
             break
 
 

@@ -60,13 +60,14 @@ PLAN OF CLASSIFICATION:
 BAD_KEYWORDS = ['api', 'framework', 'toolkit', 'tool', 'lib',
                 'library', 'platform', 'project', 'course',
                 'examples', 'guideline', 'guidelines',
-                'tutorial', 'package', 'learn', 'deprecated']
+                'tutorial', 'package', 'learn', 'deprecated',
+                'prototype']
 BAD_KEYWORDS2 = ['api', 'framework', 'library', 'toolkit',
                  'tool', 'course', 'class', 'tutorial',
-                 'deprecated']
+                 'deprecated', 'prototype']
 BAD_KEYWORDS3 = ['toolkit', 'framework', 'deprecated',
                  'homework', 'homeworks', 'platform',
-                 'reference', 'package']
+                 'reference', 'package', 'prototype']
 GOOD_KEYWORDS = ['software', 'system', 'application', 'service',
                  'powered by', 'app']
 GOOD_KEYWORDS2 = ['machine-learning', 'artificial-intelligence',
@@ -75,7 +76,7 @@ GOOD_KEYWORDS3 = ['machine learning', 'artificial intelligence',
                   'ai', 'neural networks', 'deep learning']
 GOOD_KEYWORDS4 = ['download', 'production', 'software',
                   'powered by', 'machine learning',
-                  'artificial intelligence', 'photos', 'photo!']
+                  'artificial intelligence', 'photos', 'photo']
 
 # Classifier class:
 class BetaClassifier:
@@ -150,16 +151,15 @@ class BetaClassifier:
         assert(full_name is not None), 'No full_name provided.'
 
         r = requests.get(f'https://github.com/{full_name}/blob/master/README.md')
-
         for kw in BAD_KEYWORDS3:
             if self._in_readme(kw=kw, readme=r.text):
-                #print(f'{kw} found, deducting 2 points.')
+                # print(f'{kw} found, deducting 2 points.')
                 self.score -= 2
                 continue
 
         for kw in GOOD_KEYWORDS4:
             if self._in_readme(kw=kw, readme=r.text):
-                #print(f'{kw} found, adding 1 point.')
+                # print(f'{kw} found, adding 1 point.')
                 self.score += 1
                 continue
 
@@ -174,7 +174,7 @@ class BetaClassifier:
     # Sub-method for scoring based on topics.
     def _scrape_topics(self, topics) -> None:
         if topics is None or topics == []:
-            self.score -= 3
+            self.score -= 1
 
         if any(kw in topics for kw in BAD_KEYWORDS2):
             self.score -= 5
@@ -195,13 +195,15 @@ class BetaClassifier:
 
     # Sub-method for giving a score to the repo.
     def _apply_score(self, repo: Repo) -> None:
-        rank = 'CHECK'
-        if self.score < 0:
+        rank = str
+        if self.score < 3:
             rank = 'REJECT'
-        elif 0 <= self.score <= 6:
+        elif 3 <= self.score <= 4:
             rank = 'WARNING'
-        elif 7 <= self.score <= 9:
+        elif 5 <= self.score <= 7:
             rank = 'UNSURE'
+        elif 8 <= self.score <= 10:
+            rank = 'CHECK'
         elif self.score > 10:
             rank = 'LIKELY'
 

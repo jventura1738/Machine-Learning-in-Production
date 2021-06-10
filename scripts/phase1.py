@@ -110,9 +110,10 @@ def _main():
     fp3 = open('resultsv1/BAD', 'w')
 
     for repo in repos:
-        if repo.ranking()[1] in ['LIKELY', 'CHECK']:
+        print(f'{repo} scored: {repo.ranking()}')
+        if repo.ranking()[1] == 'LIKELY':
             fp1.write(str(repo)+'\n')
-        elif repo.ranking()[1] == 'UNSURE':
+        elif repo.ranking()[1] in ['UNSURE', 'CHECK']:
             fp2.write(str(repo) + '\n')
         else:
             fp3.write(str(repo) + '\n')
