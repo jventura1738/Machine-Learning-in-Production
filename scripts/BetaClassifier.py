@@ -60,10 +60,11 @@ PLAN OF CLASSIFICATION:
 BAD_KEYWORDS = ['api', 'framework', 'toolkit', 'tool', 'lib',
                 'library', 'platform', 'project', 'course',
                 'examples', 'guideline', 'guidelines',
-                'tutorial', 'package', 'learn']
+                'tutorial', 'package', 'learn', 'deprecated']
 BAD_KEYWORDS2 = ['api', 'framework', 'library', 'toolkit',
-                 'tool', 'course', 'class', 'tutorial']
-BAD_KEYWORDS3 = ['toolkit', 'framework',
+                 'tool', 'course', 'class', 'tutorial',
+                 'deprecated']
+BAD_KEYWORDS3 = ['toolkit', 'framework', 'deprecated',
                  'homework', 'homeworks', 'platform',
                  'reference', 'package']
 GOOD_KEYWORDS = ['software', 'system', 'application', 'service',
@@ -73,7 +74,8 @@ GOOD_KEYWORDS2 = ['machine-learning', 'artificial-intelligence',
 GOOD_KEYWORDS3 = ['machine learning', 'artificial intelligence',
                   'ai', 'neural networks', 'deep learning']
 GOOD_KEYWORDS4 = ['download', 'production', 'software',
-                  'powered by']
+                  'powered by', 'machine learning',
+                  'artificial intelligence', 'photos', 'photo!']
 
 # Classifier class:
 class BetaClassifier:
@@ -151,13 +153,13 @@ class BetaClassifier:
 
         for kw in BAD_KEYWORDS3:
             if self._in_readme(kw=kw, readme=r.text):
-                print(f'{kw} found, deducting 2 points.')
+                #print(f'{kw} found, deducting 2 points.')
                 self.score -= 2
                 continue
 
         for kw in GOOD_KEYWORDS4:
             if self._in_readme(kw=kw, readme=r.text):
-                print(f'{kw} found, adding 1 point.')
+                #print(f'{kw} found, adding 1 point.')
                 self.score += 1
                 continue
 
@@ -171,6 +173,9 @@ class BetaClassifier:
 
     # Sub-method for scoring based on topics.
     def _scrape_topics(self, topics) -> None:
+        if topics is None or topics == []:
+            self.score -= 3
+
         if any(kw in topics for kw in BAD_KEYWORDS2):
             self.score -= 5
 
