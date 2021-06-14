@@ -47,11 +47,7 @@ PLAN OF CLASSIFICATION:
             - If Jupyter Notebook > 50%, take off 4 pts.
 
     3) classify as such:
-        a) negative score -> 'REJECT'
-        b) score btwn 1-6 -> 'WARNING'
-        c) score btwn 7-9 -> 'UNSURE'
-        d) score exact 10 -> 'CHECK'
-        e) score above 10 -> 'LIKELY'
+        - See below for scoring.
 
 - Justin Ventura
 """
@@ -96,15 +92,18 @@ class BetaClassifier:
         :param verbose: Verbosity for debugging.
         :return: None, modifies repo.
         """
+        print('-'*50)
+        print(f'{repo.info()[2]}')
         info = repo.info()
 
         if verbose:
             print(info[0])
         self._scrape_desc(desc=info[0])
 
-        if verbose:
+        # NOTE: This turns out not to be effective.
+        """if verbose:
             print(info[1])
-        self._check_homepage(homepage=info[1])
+        self._check_homepage(homepage=info[1])"""
 
         if verbose:
             print(info[2])
@@ -137,14 +136,18 @@ class BetaClassifier:
             self.score -= 2
         else:
             if any(kw in desc for kw in BAD_KEYWORDS):
+                print('-6 found BAD KEYWORD in desc')
                 self.score -= 6
 
             if any(kw in desc for kw in GOOD_KEYWORDS):
+                print('+2 found GOOD KEYWORD in desc')
                 self.score += 2
 
     # Sub-method for scoring based on homepage.
     def _check_homepage(self, homepage) -> None:
-        self.score += 2 if homepage else 0
+        self.score += 2 if homepage is not None else 0
+        if homepage:
+            print('+2 for homepages')
 
     # Sub-method for scoring based on README.
     def _scrape_readme(self, full_name) -> None:
@@ -153,13 +156,13 @@ class BetaClassifier:
         r = requests.get(f'https://github.com/{full_name}/blob/master/README.md')
         for kw in BAD_KEYWORDS3:
             if self._in_readme(kw=kw, readme=r.text):
-                # print(f'{kw} found, deducting 2 points.')
+                print(f'-2 for {kw} found in readme')
                 self.score -= 2
                 continue
 
         for kw in GOOD_KEYWORDS4:
             if self._in_readme(kw=kw, readme=r.text):
-                # print(f'{kw} found, adding 1 point.')
+                print(f'+1 for {kw} found in readme')
                 self.score += 1
                 continue
 
@@ -173,38 +176,31 @@ class BetaClassifier:
 
     # Sub-method for scoring based on topics.
     def _scrape_topics(self, topics) -> None:
-        if topics is None or topics == []:
-            self.score -= 1
-
         if any(kw in topics for kw in BAD_KEYWORDS2):
+            print('-5 for bad topic found')
             self.score -= 5
 
         if all(kw not in topics for kw in GOOD_KEYWORDS2):
+            print('-3 for no good topics found')
             self.score -= 3
 
     # Sub-method for scoring based on license.
     def _check_license(self, lic) -> None:
-        self.score -= 0 if lic else 1
+        self.score -= 0 if lic is not None else 1
+        if lic is None:
+            print('-1 license not found')
 
     # Sub-method for scoring based on language.
     def _check_lang(self, lang) -> None:
         if lang is None:
+            print('-10 no language')
             self.score -= 10
         else:
             self.score -= 4 if lang == 'jupyter notebook' else 0
+            if lang == 'jupyter notebook':
+                print('-4 for jupyter notebook')
 
     # Sub-method for giving a score to the repo.
     def _apply_score(self, repo: Repo) -> None:
-        rank = str
-        if self.score < 3:
-            rank = 'REJECT'
-        elif 3 <= self.score <= 4:
-            rank = 'WARNING'
-        elif 5 <= self.score <= 7:
-            rank = 'UNSURE'
-        elif 8 <= self.score <= 10:
-            rank = 'CHECK'
-        elif self.score > 10:
-            rank = 'LIKELY'
-
-        repo.apply_rank(self.score, rank)
+        print(f'FINAL SCORE: {self.score}')
+        repo.apply_rank(self.score)

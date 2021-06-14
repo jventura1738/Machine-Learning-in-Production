@@ -16,7 +16,6 @@ class RepositoryInfo:
     # Initialize the repository:
     def __init__(self, repo_info: Dict = None):
         self._score = DEFAULT    # Default may change.
-        self._label = None       # Decided by classifier.
         self._info = repo_info
 
     # NOTE: This returns the actual info I care about in
@@ -32,13 +31,12 @@ class RepositoryInfo:
         ]
 
     # Apply ranking to the repository:
-    def apply_rank(self, score=10, label='CHECK'):
+    def apply_rank(self, score=10):
         self._score = score
-        self._label = label
 
     # Returns tuple of this repo's ranking.
-    def ranking(self) -> Tuple[int, str]:
-        return self._score, self._label
+    def ranking(self) -> int:
+        return self._score
 
     # Get the full repository information.
     def full_info(self) -> Dict:

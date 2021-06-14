@@ -104,23 +104,15 @@ def search_v1(demo: bool = False):
 
 # TODO: perform a real search.
 def _main():
-    repos = search_v1(demo=True)
-    fp1 = open('resultsv1/GOOD', 'w')
-    fp2 = open('resultsv1/MAYBE', 'w')
-    fp3 = open('resultsv1/BAD', 'w')
+    repos = search_v1(demo=True) 
+    repos = sorted(repos, key=lambda x: x.ranking(), reverse=True)
 
+    fp = open('resultsv2/rankings', 'w')
     for repo in repos:
         print(f'{repo} scored: {repo.ranking()}')
-        if repo.ranking()[1] == 'LIKELY':
-            fp1.write(str(repo)+'\n')
-        elif repo.ranking()[1] in ['UNSURE', 'CHECK']:
-            fp2.write(str(repo) + '\n')
-        else:
-            fp3.write(str(repo) + '\n')
+        fp.write(str(repo)+'\n')
 
-    fp1.close()
-    fp2.close()
-    fp3.close()
+    fp.close()
 
 
 # Run script directly.
