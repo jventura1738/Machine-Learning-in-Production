@@ -53,6 +53,7 @@ PLAN OF CLASSIFICATION:
 """
 
 # NOTE: Keyword lists for regex.
+# NOTE: This was for testing purposes.
 BAD_KEYWORDS = ['api', 'framework', 'toolkit', 'tool', 'lib',
                 'library', 'platform', 'project', 'course',
                 'examples', 'guideline', 'guidelines',
@@ -73,6 +74,14 @@ GOOD_KEYWORDS3 = ['machine learning', 'artificial intelligence',
 GOOD_KEYWORDS4 = ['download', 'production', 'software',
                   'powered by', 'machine learning',
                   'artificial intelligence', 'photos', 'photo']
+
+# NOTE: Here are the newly formed keyword lists:
+BAD_DESCRIPTION = ['api', 'framework', 'toolkit', 'tool', 'library', 'package',
+                   'tutorial', 'homework', 'course', 'platform', 'examples',
+                   'prototype', 'deprecated']
+GOOD_DESCRIPTION = ['powered by', 'application', 'software', 'service',
+                    'machine learning', 'ai', 'artificial intelligence',
+                    'deep learning']
 
 # Classifier class:
 class BetaClassifier:
@@ -135,18 +144,20 @@ class BetaClassifier:
         if desc is None:
             self.score -= 2
         else:
-            if any(kw in desc for kw in BAD_KEYWORDS):
+            if any(kw in desc for kw in BAD_DESCRIPTION):
                 print('-6 found BAD KEYWORD in desc')
                 self.score -= 6
 
-            if any(kw in desc for kw in GOOD_KEYWORDS):
+            if any(kw in desc for kw in GOOD_DESCRIPTION):
                 print('+2 found GOOD KEYWORD in desc')
                 self.score += 2
+            else:
+                print('-2 might not be software')
 
     # Sub-method for scoring based on homepage.
     def _check_homepage(self, homepage) -> None:
         self.score += 2 if homepage is not None else 0
-        if homepage:
+        if homepage is not None:
             print('+2 for homepages')
 
     # Sub-method for scoring based on README.

@@ -16,7 +16,7 @@ THE CHALLENGE: we are NOT looking for frameworks, APIs,
 school projects, student work, demos for research papers
 or thesis', notebook experiments, nor hackathon projects.
 
-WHAT WE WANT: open source commercial software with some
+WHAT WE WANT: open source non-commercial software with some
 sort of ML/AI implementation.  Simple filters will not
 yield desired results, so we are still trying to figure
 out an effective way to scrape.  Brute forcing is not
@@ -104,7 +104,7 @@ def search_v1(demo: bool = False):
 
 # TODO: perform a real search.
 def _main():
-    repos = search_v1(demo=True) 
+    repos = search_v1(demo=True)
     repos = sorted(repos, key=lambda x: x.ranking(), reverse=True)
 
     fp = open('resultsv2/rankings', 'w')

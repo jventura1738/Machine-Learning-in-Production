@@ -8,7 +8,7 @@ the class in which the Classifier considers it
 to be in.
 """
 
-DEFAULT = 8
+DEFAULT = 0
 
 # RepositoryInfo class for high level interaction:
 class RepositoryInfo:
