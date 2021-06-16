@@ -171,11 +171,11 @@ class BetaClassifier:
                 self.score -= 2
                 continue
 
-        for kw in GOOD_KEYWORDS4:
-            if self._in_readme(kw=kw, readme=r.text):
-                print(f'+1 for {kw} found in readme')
-                self.score += 1
-                continue
+        # for kw in GOOD_KEYWORDS4:
+        #     if self._in_readme(kw=kw, readme=r.text):
+        #         print(f'+1 for {kw} found in readme')
+        #         self.score += 1
+        #         continue
 
         del r
 

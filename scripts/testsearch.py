@@ -45,11 +45,9 @@ def _main():
     fptr = open('repo_names2', 'w')
     for i, repo in enumerate(results):
         if repo.pushed_at <= CUTOFF:
-            i -= 1
-            continue
+            print('broken')
+            exit(1)
         fptr.write(repo.full_name+'\n')
-        if i == 500:
-            break
 
 
 # Directly run the script for action:
