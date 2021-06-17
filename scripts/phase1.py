@@ -6,6 +6,7 @@ import sys
 import stscraper as scraper
 from RepositoryInfo import RepositoryInfo as Repo
 from BetaClassifier import BetaClassifier as ClassifierV1
+from AlphaClassifier import AlphaClassifier as ClassifierV2
 
 """
 DESCRIPTION:
@@ -89,7 +90,8 @@ def search_v1(demo: bool = False):
 
             repo_list.append(Repo(repo_info=repo_info))
 
-        Lambda = ClassifierV1()
+        # Lambda = ClassifierV1()
+        Lambda = ClassifierV2()
         for repo in repo_list:
             Lambda.classify(repo, verbose=False)
             # print(f'{repo.full_info()["full_name"]}: {repo.ranking()}')

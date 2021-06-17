@@ -139,7 +139,6 @@ class BetaClassifier:
         self.score = DEFAULT
 
     # Sub-method for scoring based on description:
-    # @staticmethod
     def _scrape_desc(self, desc=None) -> None:
         if desc is None:
             self.score -= 2
