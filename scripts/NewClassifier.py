@@ -22,7 +22,8 @@ TOPICS = ['machine-learning', 'artificial-intelligence', 'deep-learning',
           'neural-networks', 'ai', 'neural-nets', 'deep-neural-networks']
 KEYWORDS = ['machine learning', 'artificial intelligence', 'deep learning',
             'ml', 'ai']
-BAD_KEYWORDS = ['research papers', '<code>']
+BAD_KEYWORDS = ['research papers',
+                '<code>']
 
 
 class AlphaClassifier:
@@ -81,12 +82,6 @@ class AlphaClassifier:
             if any(kw in desc for kw in BAD_DESCRIPTION):
                 print('-6 found BAD KEYWORD in desc')
                 self.score -= 6
-
-            # if any(kw in desc for kw in GOOD_DESCRIPTION):
-            #     print('+2 found GOOD KEYWORD in desc')
-            #     self.score += 2
-            # else:
-            #     print('-2 might not be software')
 
     # Sub-method for scoring based on README.
     def _scrape_readme(self, full_name) -> None:

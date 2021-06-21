@@ -20,9 +20,6 @@ THIS IS A TESTING SCRIPT, WILL BE USELESS LATER.
 TOKENS = os.getenv('GITHUB_API_TOKENS', default=None)
 g = Github(TOKENS)
 
-# Cutoff date for filter:
-CUTOFF = datetime.datetime(2021, 1, 1)
-
 # Function to search on Github
 def search_github(kw):
     rate_limit = g.get_rate_limit()
@@ -33,7 +30,8 @@ def search_github(kw):
     else:
         print(f'You have {rate.remaining}/{rate.limit} API calls remaining')
     # query = '+'.join(kw)+'in:name+stars:>=100'
-    query = '+'.join(kw) + '+in:readme in:description stars:>=100 pushed:>2021-01-01'
+    # query = '+'.join(kw) + '+in:readme in:description stars:>=100 pushed:>2021-01-01'
+    query = '-' + kw + '+in:readme in:description stars:>=100 pushed:>2021-01-01'
     result = g.search_repositories(query, 'stars', 'desc')
     return result
 
@@ -42,11 +40,8 @@ def _main():
     # keywords = sys.argv[1:]
     keywords = 'machine learning'
     results = search_github(keywords)
-    fptr = open('repo_names2', 'w')
+    fptr = open('repo_names3', 'w')
     for i, repo in enumerate(results):
-        if repo.pushed_at <= CUTOFF:
-            print('broken')
-            exit(1)
         fptr.write(repo.full_name+'\n')
 
 

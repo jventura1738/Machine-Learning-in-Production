@@ -101,7 +101,7 @@ def search_v1(demo: bool = False):
 
     # NOTE: This is for the real prototype:
     else:
-        pass
+       pass
 
 
 # TODO: perform a real search.
