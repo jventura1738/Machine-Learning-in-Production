@@ -30,15 +30,14 @@ def search_github(kw):
     else:
         print(f'You have {rate.remaining}/{rate.limit} API calls remaining')
     # query = '+'.join(kw)+'in:name+stars:>=100'
-    # query = '+'.join(kw) + '+in:readme in:description stars:>=100 pushed:>2021-01-01'
-    query = '-' + kw + '+in:readme in:description stars:>=100 pushed:>2021-01-01'
+    query = '+'.join(kw) + '+in:readme in:description stars:>=100 pushed:>2021-01-01'
     result = g.search_repositories(query, 'stars', 'desc')
     return result
 
 # Main function:
 def _main():
-    # keywords = sys.argv[1:]
-    keywords = 'machine learning'
+    keywords = sys.argv[1:]
+    # keywords = 'machine learning'
     results = search_github(keywords)
     fptr = open('repo_names3', 'w')
     for i, repo in enumerate(results):

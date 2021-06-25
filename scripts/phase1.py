@@ -6,7 +6,8 @@ import sys
 import stscraper as scraper
 from RepositoryInfo import RepositoryInfo as Repo
 from BetaClassifier import BetaClassifier as ClassifierV1
-from AlphaClassifier import AlphaClassifier as ClassifierV2
+# from AlphaClassifier import AlphaClassifier as ClassifierV2
+from NewClassifier import NewClassifier as ClassifierV2
 
 """
 DESCRIPTION:

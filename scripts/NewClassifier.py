@@ -6,8 +6,9 @@ import requests
 import re
 
 """
-This is a new version of the classifier.  This one will
-try to do more filtering and less reinforcement.
+This is the newest version of the classifier, where it will
+filter out useless stuff, then pay closer attention to the
+other details besides key words.
 """
 
 # NOTE: Here are the newly formed keyword lists:
@@ -26,7 +27,7 @@ BAD_KEYWORDS = ['research papers',
                 '<code>']
 
 
-class AlphaClassifier:
+class NewClassifier:
 
     # Initialize the classifier.
     def __init__(self):
@@ -50,9 +51,9 @@ class AlphaClassifier:
             print(info[0])
         self._scrape_desc(desc=info[0])
 
-        if verbose:
-            print(info[2])
-        self._scrape_readme(full_name=info[2])
+        # if verbose:
+        #     print(info[2])
+        # self._scrape_readme(full_name=info[2])
 
         if verbose:
             print(info[3])
@@ -63,7 +64,7 @@ class AlphaClassifier:
         self._check_lang(lang=info[5])
 
         if self._is_mlai is False:
-            self.score -= 5
+            self.score -= 2
 
         # Now apply the score acquired.
         self._apply_score(repo=repo)
@@ -80,8 +81,8 @@ class AlphaClassifier:
             self.score -= 2
         else:
             if any(kw in desc for kw in BAD_DESCRIPTION):
-                print('-6 found BAD KEYWORD in desc')
-                self.score -= 6
+                print('-1 found BAD KEYWORD in desc')
+                self.score -= 1
 
     # Sub-method for scoring based on README.
     def _scrape_readme(self, full_name) -> None:
@@ -114,12 +115,12 @@ class AlphaClassifier:
     # Sub-method for scoring based on language.
     def _check_lang(self, lang) -> None:
         if lang is None:
-            print('-10 no language')
-            self.score -= 10
+            print('-5 no language')
+            self.score -= 5
         else:
-            self.score -= 4 if lang == 'jupyter notebook' else 0
+            self.score -= 2 if lang == 'jupyter notebook' else 0
             if lang == 'jupyter notebook':
-                print('-4 for jupyter notebook')
+                print('-2 for jupyter notebook')
 
     # Sub-method for giving a score to the repo.
     def _apply_score(self, repo: Repo) -> None:
