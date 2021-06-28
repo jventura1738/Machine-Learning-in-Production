@@ -13,11 +13,11 @@ eriklindernoren/ml-from-scratch scored: 0
 sebastianruder/nlp-progress scored: 0
 mozilla/deepspeech scored: 0
 mxgmn/wavefunctioncollapse scored: 0
+junyanz/pytorch-cyclegan-and-pix2pix scored: 0  [library?]
+photoprism/photoprism scored: 0  [CONFIRMED POSITIVE]
+streamlit/streamlit scored: 0   [LIBRARY, USES A LOT OF CODE SNIPPETS]
 junyanz/pytorch-cyclegan-and-pix2pix scored: 0
-photoprism/photoprism scored: 0
-streamlit/streamlit scored: 0
-junyanz/pytorch-cyclegan-and-pix2pix scored: 0
-cmusatyalab/openface scored: 0
+cmusatyalab/openface scored: 0  [THIS IS AN API]
 pytorchlightning/pytorch-lightning scored: 0
 ultralytics/yolov5 scored: 0
 aleju/imgaug scored: 0
