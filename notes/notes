@@ -1,0 +1,17 @@
+IDEAS FOR NEXT ROUND:
+
+CODE SNIPPETS IN README:
+	- readme's with a lot of code sections tend to be indicative
+	  of some sort of library to be imported.
+
+IMAGES IN README:
+	- no images seem to be a bad sign.
+	- images with demonstrations are a good sign.
+
+REPOSITORY SIZE ANALYSIS:
+	- repo's with little code (small number of bytes) tend to
+	  be books/guides/reading lists etc.
+
+LANGUAGE ANALYSIS:
+	- if the main language is TeX, Jupyter Notebooks, or None,
+	  this is a bad sign.

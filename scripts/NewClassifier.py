@@ -14,7 +14,7 @@ other details besides key words.
 # NOTE: Here are the newly formed keyword lists:
 BAD_DESCRIPTION = ['api', 'framework', 'toolkit', 'tool', 'library', 'package',
                    'tutorial', 'homework', 'course', 'platform', 'examples',
-                   'prototype', 'deprecated', 'interview']
+                   'prototype', 'deprecated', 'interview', 'engine']
 BAD_TOPICS = ['api', 'framework', 'toolkit', 'tool', 'library', 'package',
               'tutorial', 'homework', 'course', 'platform', 'examples',
               'prototype', 'interview-practice', 'interview-questions',
@@ -25,6 +25,7 @@ KEYWORDS = ['machine learning', 'artificial intelligence', 'deep learning',
             'ml', 'ai']
 BAD_KEYWORDS = ['research papers',
                 '<code>']
+LANGUAGES = ['jupyter notebook', 'matlab', 'tex']
 
 
 class NewClassifier:
@@ -50,6 +51,11 @@ class NewClassifier:
         if verbose:
             print(info[0])
         self._scrape_desc(desc=info[0])
+
+        if verbose:
+            print(info[2])
+        if self._in_name(info[2]):
+            self.score -= 5
 
         # if verbose:
         #     print(info[2])
@@ -83,6 +89,11 @@ class NewClassifier:
             if any(kw in desc for kw in BAD_DESCRIPTION):
                 print('-1 found BAD KEYWORD in desc')
                 self.score -= 1
+
+    # Sub-method for name-based filtering.
+    def _in_name(self, full_name) -> bool:
+        p = re.compile(f'{"awesome"}', re.IGNORECASE)
+        return True if p.search(full_name) else False
 
     # Sub-method for scoring based on README.
     def _scrape_readme(self, full_name) -> None:
@@ -118,7 +129,7 @@ class NewClassifier:
             print('-5 no language')
             self.score -= 5
         else:
-            self.score -= 2 if lang == 'jupyter notebook' else 0
+            self.score -= 2 if lang in LANGUAGES else 0
             if lang == 'jupyter notebook':
                 print('-2 for jupyter notebook')
 
