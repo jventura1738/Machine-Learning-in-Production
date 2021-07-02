@@ -39,7 +39,7 @@ def _main():
     keywords = sys.argv[1:]
     # keywords = 'machine learning'
     results = search_github(keywords)
-    fptr = open('repo_names3', 'w')
+    fptr = open('repo_names4', 'a')
     for i, repo in enumerate(results):
         fptr.write(repo.full_name+'\n')
 

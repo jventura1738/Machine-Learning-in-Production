@@ -99,7 +99,7 @@ class NewClassifier:
     def _scrape_readme(self, full_name) -> None:
         assert(full_name is not None), 'No full_name provided.'
 
-        r = requests.get(f'https://github.com/{full_name}/blob/master/README.md')
+        r = requests.get(f'https://raw.githubusercontent.com/{full_name}/master/readme.md')
         for kw in KEYWORDS:
             if self._in_readme(kw=kw, readme=r.text):
                 self._is_mlai = True
