@@ -418,7 +418,7 @@ danikula/androidvideocache
 daniulive/smarterstreaming
 dapr/dapr
 darknessomi/musicbox
-davidkpiano/xstate
+statelyai/xstate
 dbcli/pgcli
 denoland/deno
 dense-analysis/ale
@@ -609,7 +609,6 @@ hyperopt/hyperopt
 inputmice/conversations
 iamadamdev/bypass-paywalls-chrome
 ianyh/amethyst
-iawia002/annie
 idank/explainshell
 ikatyang/emoji-cheat-sheet
 iluwatar/java-design-patterns
@@ -1111,6 +1110,7 @@ ventoy/ventoy
 vercel/commerce
 vercel/hyper
 vercel/styled-jsx
+vercel/swr
 videojs/video.js
 vim-airline/vim-airline
 vim-syntastic/syntastic
@@ -1433,6 +1433,7 @@ hlissner/doom-emacs
 huggingface/datasets
 hybridgroup/gocv
 iamkun/dayjs
+iawia002/annie
 icsharpcode/ilspy
 impress/impress.js
 infernojs/inferno
@@ -1626,7 +1627,6 @@ v2ray/v2ray-core
 valyala/fasthttp
 vercel/next.js
 vercel/pkg
-vercel/swr
 vicc/chameleon
 vitejs/vite
 vlang/v

@@ -3,7 +3,6 @@
 import os
 import re
 import sys
-import mistune
 import requests
 from github import Github
 
@@ -13,7 +12,7 @@ candidate repositories.
 """
 
 FENCED_CODE = re.compile(
-    r"```[a-z]*\n[\s\S]*?\n```"
+    r"```[a-z]*\n[\s\S]*?\n*```"
 )
 
 # FENCED_CODE = re.compile(
@@ -39,6 +38,7 @@ def snippet_extraction(repo_slug, dest) -> None:
 
     # Search for the pattern in the raw markdown:
     code_blocks = FENCED_CODE.findall(r.text)
+
     # Write the beginning section (for code blocks).
     dest.write(f'# {repo_slug}, {len(code_blocks)} blocks.' + '\n\n')
     for code in code_blocks:

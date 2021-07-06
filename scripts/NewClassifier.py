@@ -2,8 +2,11 @@
 
 from RepositoryInfo import RepositoryInfo as Repo
 from RepositoryInfo import DEFAULT
+from github import Github
 import requests
+import time
 import re
+import os
 
 """
 This is the newest version of the classifier, where it will
@@ -25,8 +28,19 @@ KEYWORDS = ['machine learning', 'artificial intelligence', 'deep learning',
             'ml', 'ai']
 BAD_KEYWORDS = ['research papers',
                 '<code>']
-LANGUAGES = ['jupyter notebook', 'matlab', 'tex']
+LANGUAGES = ['jupyter notebook', 'matlab',
+             'tex']
+TRIGGERS = ['import torch', 'import spacy', 'import numpy',
+            'import tensorflow as tf', 'dataset', 'datasets']
 
+# NOTE: This is the regex for finding code blocks in README.
+FENCED_CODE = re.compile(
+    r"```[a-z]*\n[\s\S]*?\n*```"
+)
+
+# IMPORTANT: Needed to avoid miserable rate limits on GitHub.
+TOKENS = os.getenv('GITHUB_API_TOKENS', default=None)
+g = Github(TOKENS)
 
 class NewClassifier:
 
@@ -57,9 +71,9 @@ class NewClassifier:
         if self._in_name(info[2]):
             self.score -= 5
 
-        # if verbose:
-        #     print(info[2])
-        # self._scrape_readme(full_name=info[2])
+        if verbose:
+            print(info[2])
+        self._scrape_readme(full_name=info[2])
 
         if verbose:
             print(info[3])
@@ -99,21 +113,45 @@ class NewClassifier:
     def _scrape_readme(self, full_name) -> None:
         assert(full_name is not None), 'No full_name provided.'
 
-        r = requests.get(f'https://raw.githubusercontent.com/{full_name}/master/readme.md')
-        for kw in KEYWORDS:
-            if self._in_readme(kw=kw, readme=r.text):
-                self._is_mlai = True
-                break
-        for kw in BAD_KEYWORDS:
-            if self._in_readme(kw=kw, readme=r.text):
-                self.score -= 2
-        del r
+        # r = requests.get(f'https://raw.githubusercontent.com/{full_name}/master/readme.md')
+        # for kw in KEYWORDS:
+        #     if self._in_readme(kw=kw, readme=r.text):
+        #         self._is_mlai = True
+        #         break
+        # for kw in BAD_KEYWORDS:
+        #     if self._in_readme(kw=kw, readme=r.text):
+        #         self.score -= 2
+        # del r
+        self._check_code_blocks(full_name)
 
     # Sub-method for regex in README to find bad keywords.
     @staticmethod
     def _in_readme(kw: str, readme: str) -> bool:
         p = re.compile(f' ({kw})', re.IGNORECASE)
         return True if p.search(readme) else False
+
+    # Sub-method for checking code blocks for red flags.
+    def _check_code_blocks(self, repo_slug):
+        assert (repo_slug is not None), 'No full_name provided.'
+
+        # Get the readme raw...
+        readme_url = g.get_repo(repo_slug).get_readme().download_url
+        r = requests.get(readme_url)
+        time.sleep(1)
+
+        # Search for the pattern in the raw markdown:
+        code_blocks = FENCED_CODE.findall(r.text)
+        code_block_count = len(code_blocks)
+
+        # If no code blocks, can be a good sign.
+        if code_block_count == 0:
+            self.score += 1
+        else:
+            for code in code_blocks:
+                if any(t in code for t in TRIGGERS):
+                    self.score -= 1
+                    break
+
 
     # Sub-method for scoring based on topics.
     def _scrape_topics(self, topics) -> None:

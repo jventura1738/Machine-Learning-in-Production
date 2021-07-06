@@ -195,7 +195,7 @@ winds article https://alexiskold.net/2018/04/12/meet-12-startups-from-techstars-
 
 # julialang/julia, 0 blocks.
 
-# pytorchlightning/pytorch-lightning, 8 blocks.
+# pytorchlightning/pytorch-lightning, 21 blocks.
 
 ```bash
 pip install pytorch-lightning
@@ -205,75 +205,71 @@ pip install pytorch-lightning
   pip install pytorch-lightning['extra']
   ```
 
-  #### Conda
-
-  ```bash
+```bash
   conda install pytorch-lightning -c conda-forge
   ```
 
-  #### Install stable 1.3.x
-
-  the actual status of 1.3 [stable] is following:
-
-  ![CI base testing](https://github.com/PyTorchLightning/pytorch-lightning/workflows/CI%20base%20testing/badge.svg?branch=release%2F1.3.x&event=push)
-  ![CI complete testing](https://github.com/PyTorchLightning/pytorch-lightning/workflows/CI%20complete%20testing/badge.svg?branch=release%2F1.3.x&event=push)
-  ![PyTorch & Conda](https://github.com/PyTorchLightning/pytorch-lightning/workflows/PyTorch%20&%20Conda/badge.svg?branch=release%2F1.3.x&event=push)
-  ![TPU tests](https://github.com/PyTorchLightning/pytorch-lightning/workflows/TPU%20tests/badge.svg?branch=release%2F1.3.x&event=push)
-  ![Docs check](https://github.com/PyTorchLightning/pytorch-lightning/workflows/Docs%20check/badge.svg?branch=release%2F1.3.x&event=push)
-
-  Install future release from the source
-  ```bash
+```bash
   pip install git+https://github.com/PytorchLightning/pytorch-lightning.git@release/1.3.x --upgrade
   ```
 
-  #### Install bleeding-edge - future 1.4
-
-  Install nightly from the source (no guarantees)
-  ```bash
+```bash
   pip install https://github.com/PyTorchLightning/pytorch-lightning/archive/master.zip
   ```
 
-  or from testing PyPI
-  ```bash
+```bash
   pip install -iU https://test.pypi.org/simple/ pytorch-lightning
   ```
-</details>
-<!-- end skipping PyPI description -->
 
-### Step 1: Add these imports
-
+```python
+import os
+import torch
+from torch import nn
+import torch.nn.functional as F
+from torchvision.datasets import MNIST
+from torch.utils.data import DataLoader, random_split
+from torchvision import transforms
+import pytorch_lightning as pl
 ```
 
+```python
+class LitAutoEncoder(pl.LightningModule):
+
+    def __init__(self):
+        super().__init__()
+        self.encoder = nn.Sequential(nn.Linear(28 * 28, 128), nn.ReLU(), nn.Linear(128, 3))
+        self.decoder = nn.Sequential(nn.Linear(3, 128), nn.ReLU(), nn.Linear(128, 28 * 28))
+
+    def forward(self, x):
+        # in lightning, forward defines the prediction/inference actions
+        embedding = self.encoder(x)
+        return embedding
+
+    def training_step(self, batch, batch_idx):
+        # training_step defines the train loop. It is independent of forward
+        x, y = batch
+        x = x.view(x.size(0), -1)
+        z = self.encoder(x)
+        x_hat = self.decoder(z)
+        loss = F.mse_loss(x_hat, x)
+        self.log('train_loss', loss)
+        return loss
+
+    def configure_optimizers(self):
+        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        return optimizer
 ```
 
-### Step 2: Define a LightningModule (nn.Module subclass)
-A LightningModule defines a full *system* (ie: a GAN, autoencoder, BERT or a simple Image Classifier).
+```python
+dataset = MNIST(os.getcwd(), download=True, transform=transforms.ToTensor())
+train, val = random_split(dataset, [55000, 5000])
 
+autoencoder = LitAutoEncoder()
+trainer = pl.Trainer()
+trainer.fit(autoencoder, DataLoader(train), DataLoader(val))
 ```
 
-```
-
-**Note: Training_step defines the training loop. Forward defines how the LightningModule behaves during inference/prediction.**
-
-### Step 3: Train!
-
-```
-
-```
-
-## Advanced features
-Lightning has over [40+ advanced features](https://pytorch-lightning.readthedocs.io/en/latest/common/trainer.html#trainer-flags) designed for professional AI research at scale.
-
-Here are some examples:
-
-<div align="center">
-  <img src="https://pl-bolts-doc-images.s3.us-east-2.amazonaws.com/features_2.jpg" max-height="600px">
-</div>
-
-<details>
-  <summary>Highlighted feature code snippets</summary>
-
-  ```python
+```python
   # 8 GPUs
   # no code changes needed
   trainer = Trainer(max_epochs=1, gpus=8)
@@ -282,23 +278,17 @@ Here are some examples:
   trainer = Trainer(max_epochs=1, gpus=8, num_nodes=32)
   ```
 
-  <summary>Train on TPUs without code changes</summary>
-
-  ```python
+```python
   # no code changes needed
   trainer = Trainer(tpu_cores=8)
    ```
 
-  <summary>16-bit precision</summary>
-
-  ```python
+```python
   # no code changes needed
   trainer = Trainer(precision=16)
    ```
 
-  <summary>Experiment managers</summary>
-
-  ```python
+```python
   from pytorch_lightning import loggers
 
   # tensorboard
@@ -319,31 +309,23 @@ Here are some examples:
   # ... and dozens more
    ```
 
-  <summary>EarlyStopping</summary>
-
-  ```python
+```python
   es = EarlyStopping(monitor='val_loss')
   trainer = Trainer(callbacks=[es])
    ```
 
-  <summary>Checkpointing</summary>
-
-  ```python
+```python
   checkpointing = ModelCheckpoint(monitor='val_loss')
   trainer = Trainer(callbacks=[checkpointing])
    ```
 
-  <summary>Export to torchscript (JIT) (production use)</summary>
-
-  ```python
+```python
   # torchscript
   autoencoder = LitAutoEncoder()
   torch.jit.save(autoencoder.to_torchscript(), "model.pt")
    ```
 
-  <summary>Export to ONNX (production use)</summary>
-
-  ```python
+```python
   # onnx
   with tempfile.NamedTemporaryFile(suffix='.onnx', delete=False) as tmpfile:
       autoencoder = LitAutoEncoder()
@@ -351,109 +333,45 @@ Here are some examples:
       autoencoder.to_onnx(tmpfile.name, input_sample, export_params=True)
       os.path.isfile(tmpfile.name)
    ```
-</details>
 
-### Pro-level control of training loops (advanced users)
-For complex/professional level work, you have optional full control of the training loop and optimizers.
+```python
+class LitAutoEncoder(pl.LightningModule):
+    def __init__(self):
+        super().__init__()
+        self.automatic_optimization = False
 
+    def training_step(self, batch, batch_idx):
+        # access your optimizers with use_pl_optimizer=False. Default is True
+        opt_a, opt_b = self.optimizers(use_pl_optimizer=True)
+
+        loss_a = ...
+        self.manual_backward(loss_a, opt_a)
+        opt_a.step()
+        opt_a.zero_grad()
+
+        loss_b = ...
+        self.manual_backward(loss_b, opt_b, retain_graph=True)
+        self.manual_backward(loss_b, opt_b)
+        opt_b.step()
+        opt_b.zero_grad()
 ```
 
 ```
----
-
-## Advantages over unstructured PyTorch
-
-* Models become hardware agnostic
-* Code is clear to read because engineering code is abstracted away
-* Easier to reproduce
-* Make fewer mistakes because lightning handles the tricky engineering
-* Keeps all the flexibility (LightningModules are still PyTorch modules), but removes a ton of boilerplate
-* Lightning has dozens of integrations with popular machine learning tools.
-* [Tested rigorously with every new PR](https://github.com/PyTorchLightning/pytorch-lightning/tree/master/tests). We test every combination of PyTorch and Python supported versions, every OS, multi GPUs and even TPUs.
-* Minimal running speed overhead (about 300 ms per epoch compared with pure PyTorch).
-
----
-
-## Examples
-
-###### Hello world
-- [MNIST hello world](https://pytorch-lightning.readthedocs.io/en/latest/notebooks/lightning_examples/mnist-hello-world.html)
-
-###### Contrastive Learning
-- [BYOL](https://lightning-bolts.readthedocs.io/en/latest/self_supervised_models.html#byol)
-- [CPC v2](https://lightning-bolts.readthedocs.io/en/latest/self_supervised_models.html#cpc-v2)
-- [Moco v2](https://lightning-bolts.readthedocs.io/en/latest/self_supervised_models.html#moco-v2)
-- [SIMCLR](https://lightning-bolts.readthedocs.io/en/latest/self_supervised_models.html#simclr)
-
-###### NLP
-- [GPT-2](https://lightning-bolts.readthedocs.io/en/latest/convolutional.html#gpt-2)
-- [BERT](https://pytorch-lightning.readthedocs.io/en/latest/notebooks/lightning_examples/text-transformers.html)
-
-
-###### Reinforcement Learning
-- [DQN](https://lightning-bolts.readthedocs.io/en/latest/reinforce_learn.html#dqn-models)
-- [Dueling-DQN](https://lightning-bolts.readthedocs.io/en/latest/reinforce_learn.html#dueling-dqn)
-- [Reinforce](https://lightning-bolts.readthedocs.io/en/latest/reinforce_learn.html#reinforce)
-
-###### Vision
-- [GAN](https://pytorch-lightning.readthedocs.io/en/latest/notebooks/lightning_examples/basic-gan.html)
-
-###### Classic ML
-- [Logistic Regression](https://lightning-bolts.readthedocs.io/en/latest/classic_ml.html#logistic-regression)
-- [Linear Regression](https://lightning-bolts.readthedocs.io/en/latest/classic_ml.html#linear-regression)
-
----
-
-## Community
-
-The lightning community is maintained by
-- [10+ core contributors](https://pytorch-lightning.readthedocs.io/en/latest/governance.html) who are all a mix of professional engineers, Research Scientists, and Ph.D. students from top AI labs.
-- 480+ active community contributors.
-
-Want to help us build Lightning and reduce boilerplate for thousands of researchers? [Learn how to make your first contribution here](https://devblog.pytorchlightning.ai/quick-contribution-guide-86d977171b3a)
-
-Lightning is also part of the [PyTorch ecosystem](https://pytorch.org/ecosystem/) which requires projects to have solid testing, documentation and support.
-
-### Asking for help
-If you have any questions please:
-1. [Read the docs](https://pytorch-lightning.rtfd.io/en/latest).
-2. [Search through existing Discussions](https://github.com/PyTorchLightning/pytorch-lightning/discussions), or [add a new question](https://github.com/PyTorchLightning/pytorch-lightning/discussions/new)
-3. [Join our slack](https://join.slack.com/t/pytorch-lightning/shared_invite/zt-pw5v393p-qRaDgEk24~EjiZNBpSQFgQ).
-### Funding
-[We're venture funded](https://techcrunch.com/2020/10/08/grid-ai-raises-18-6m-series-a-to-help-ai-researchers-and-engineers-bring-their-models-to-production/) to make sure we can provide around the clock support, hire a full-time staff, attend conferences, and move faster through implementing features you request.
-
----
-
-## Grid AI
-Grid AI is our platform for training models at scale on the cloud!
-
-**Sign up for our FREE community Tier [here](https://www.grid.ai/pricing/)**
-
-To use grid, take your regular command:
-
+python my_model.py --learning_rate 1e-6 --layers 2 --gpus 4
 ```
 
 ```
-
-And change it to use the grid train command:
-
+grid train --grid_gpus 4 my_model.py --learning_rate 'uniform(1e-6, 1e-1, 20)' --layers '[2, 4, 8, 16]'
 ```
 
-```
-
-The above command will launch (20 * 4) experiments each running on 4 GPUs (320 GPUs!) - by making ZERO changes to
-your code.
-
----
-
-## Licence
-
-Please observe the Apache 2.0 license that is listed in this repository.
-In addition, the Lightning framework is Patent Pending.
-
-## BibTeX
-If you want to cite the framework feel free to use this (but only if you loved it 😊) or [zenodo](https://zenodo.org/record/3828935#.YC45Lc9Khqs):
-
+```bibtex
+@article{falcon2019pytorch,
+  title={PyTorch Lightning},
+  author={Falcon, WA, et al.},
+  journal={GitHub. Note: https://github.com/PyTorchLightning/pytorch-lightning},
+  volume={3},
+  year={2019}
+}
 ```
 
 # rare-technologies/gensim, 2 blocks.
@@ -1698,1047 +1616,7 @@ show([logistic_regression_global, decision_tree_global])
 
 # iterative/dvc, 0 blocks.
 
-# jackzhenguo/python-small-examples, 95 blocks.
-
-```python
-import smtplib
-from email import (header)
-from email.mime import (text, application, multipart)
-import time
-
-def sender_mail():
-    smt_p = smtplib.SMTP()
-    smt_p.connect(host='smtp.qq.com', port=25)
-    sender, password = '113097485@qq.com', "**************"
-    smt_p.login(sender, password)
-    receiver_addresses, count_num = [
-        'guozhennianhua@163.com', 'xiaoxiazi99@163.com'], 1
-    for email_address in receiver_addresses:
-        try:
-            msg = multipart.MIMEMultipart()
-            msg['From'] = "zhenguo"
-            msg['To'] = email_address
-            msg['subject'] = header.Header('这是邮件主题通知', 'utf-8')
-            msg.attach(text.MIMEText(
-                '这是一封测试邮件，请勿回复本邮件~', 'plain', 'utf-8'))
-            smt_p.sendmail(sender, email_address, msg.as_string())
-            time.sleep(10)
-            print('第%d次发送给%s' % (count_num, email_address))
-            count_num = count_num + 1
-        except Exception as e:
-            print('第%d次给%s发送邮件异常' % (count_num, email_address))
-            continue
-    smt_p.quit()
-
-sender_mail()
-```
-
-```python
-def binarySearch(arr, left, right, x):
-    while left <= right:
-
-        mid = int(left + (right - left) / 2); # 找到中间位置。求中点写成(left+right)/2更容易溢出，所以不建议这样写
-
-        # 检查x是否出现在位置mid
-        if arr[mid] == x:
-            print('found %d 在索引位置%d 处' %(x,mid))
-            return mid
-
-            # 假如x更大，则不可能出现在左半部分
-        elif arr[mid] < x:
-            left = mid + 1 #搜索区间变为[mid+1,right]
-            print('区间缩小为[%d,%d]' %(mid+1,right))
-
-        # 同理，假如x更小，则不可能出现在右半部分
-        elif x<arr[mid]:
-            right = mid - 1 #搜索区间变为[left,mid-1]
-            print('区间缩小为[%d,%d]' %(left,mid-1))
-
-    # 假如搜索到这里，表明x未出现在[left,right]中
-    return -1
-```
-
-```python
-In [8]: binarySearch([4,5,6,7,10,20,100],0,6,5)
-区间缩小为[0,2]
-found 5 at 1
-Out[8]: 1
-
-In [9]: binarySearch([4,5,6,7,10,20,100],0,6,4)
-区间缩小为[0,2]
-区间缩小为[0,0]
-found 4 at 0
-Out[9]: 0
-
-In [10]: binarySearch([4,5,6,7,10,20,100],0,6,20)
-区间缩小为[4,6]
-found 20 at 5
-Out[10]: 5
-
-In [11]: binarySearch([4,5,6,7,10,20,100],0,6,100)
-区间缩小为[4,6]
-区间缩小为[6,6]
-found 100 at 6
-Out[11]: 6
-```
-
-```python
-import requests
-from lxml import etree
-import pandas as pd
-import re
-
-url = 'http://www.weather.com.cn/weather1d/101010100.shtml#input'
-with requests.get(url) as res:
-    content = res.content
-    html = etree.HTML(content)
-```
-
-```python
-location = html.xpath('//*[@id="around"]//a[@target="_blank"]/span/text()')
-temperature = html.xpath('//*[@id="around"]/div/ul/li/a/i/text()')
-```
-
-```python
-['香河', '涿州', '唐山', '沧州', '天津', '廊坊', '太原', '石家庄', '涿鹿', '张家口', '保定', '三河', '北京孔庙', '北京国子监', '中国地质博物馆', '月坛公
-园', '明城墙遗址公园', '北京市规划展览馆', '什刹海', '南锣鼓巷', '天坛公园', '北海公园', '景山公园', '北京海洋馆']
-
-['11/-5°C', '14/-5°C', '12/-6°C', '12/-5°C', '11/-1°C', '11/-5°C', '8/-7°C', '13/-2°C', '8/-6°C', '5/-9°C', '14/-6°C', '11/-4°C', '13/-3°C'
-, '13/-3°C', '12/-3°C', '12/-3°C', '13/-3°C', '12/-2°C', '12/-3°C', '13/-3°C', '12/-2°C', '12/-2°C', '12/-2°C', '12/-3°C']
-```
-
-```python
-df = pd.DataFrame({'location':location, 'temperature':temperature})
-print('温度列')
-print(df['temperature'])
-```
-
-```python
-df['high'] = df['temperature'].apply(lambda x: int(re.match('(-?[0-9]*?)/-?[0-9]*?°C', x).group(1) ) )
-df['low'] = df['temperature'].apply(lambda x: int(re.match('-?[0-9]*?/(-?[0-9]*?)°C', x).group(1) ) )
-print(df)
-```
-
-```python
-m = re.match(r'^(\d{3})-(\d{3,8})$', '010-12345')
-print(m.group(0))
-print(m.group(1))
-print(m.group(2))
-
-# 010-12345
-# 010
-# 12345
-```
-
-```kepython
-Name: temperature, dtype: object
-    location temperature  high  low
-0         香河     11/-5°C    11   -5
-1         涿州     14/-5°C    14   -5
-2         唐山     12/-6°C    12   -6
-3         沧州     12/-5°C    12   -5
-4         天津     11/-1°C    11   -1
-5         廊坊     11/-5°C    11   -5
-6         太原      8/-7°C     8   -7
-7        石家庄     13/-2°C    13   -2
-8         涿鹿      8/-6°C     8   -6
-9        张家口      5/-9°C     5   -9
-10        保定     14/-6°C    14   -6
-11        三河     11/-4°C    11   -4
-12      北京孔庙     13/-3°C    13   -3
-13     北京国子监     13/-3°C    13   -3
-14   中国地质博物馆     12/-3°C    12   -3
-15      月坛公园     12/-3°C    12   -3
-16   明城墙遗址公园     13/-3°C    13   -3
-17  北京市规划展览馆     12/-2°C    12   -2
-18       什刹海     12/-3°C    12   -3
-19      南锣鼓巷     13/-3°C    13   -3
-20      天坛公园     12/-2°C    12   -2
-21      北海公园     12/-2°C    12   -2
-22      景山公园     12/-2°C    12   -2
-23     北京海洋馆     12/-3°C    12   -3
-```
-
-```python
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from pyecharts.charts import Bar,Grid,Line
-import pyecharts.options as opts
-from pyecharts.globals import ThemeType
-```
-
-```python
-Out[89]:
-        a  val
-0  apple1  1.0
-1  apple2  2.0
-2  apple3  3.0
-3  apple4  4.0
-4  apple5  5.0
-```
-
-```python
-a  apple1  apple2  apple3  apple4  apple5
-0     1.0     2.0     3.0     4.0     5.0
-```
-
-```python
-In [113]: pd.DataFrame(index=[0],columns=df.a,data=dict(zip(df.a,df.val)))
-Out[113]:
-a  apple1  apple2  apple3  apple4  apple5
-0     1.0     2.0     3.0     4.0     5.0
-```
-
-```python
-In [116]: dict(zip(df.a,df.val))
-Out[116]: {'apple1': 1.0, 'apple2': 2.0, 'apple3': 3.0, 'apple4': 4.0, 'apple5': 5.0}
-```
-
-```python
-import pandas as pd
-
-movies = pd.read_csv('./data/movietweetings/movies.dat', delimiter='::', engine='python', header=None, names = ['Movie ID', 'Movie Title', 'Genre'])
-```
-
-```python
-   Movie ID                                        Movie Title  \
-0         8      Edison Kinetoscopic Record of a Sneeze (1894)   
-1        10                La sortie des usines Lumi猫re (1895)   
-2        12                      The Arrival of a Train (1896)   
-3        25  The Oxford and Cambridge University Boat Race ...   
-4        91                         Le manoir du diable (1896)   
-5       131                           Une nuit terrible (1896)   
-6       417                      Le voyage dans la lune (1902)   
-7       439                     The Great Train Robbery (1903)   
-8       443        Hiawatha, the Messiah of the Ojibway (1903)   
-9       628                    The Adventures of Dollie (1908)  
-                                          Genre  
-0                             Documentary|Short  
-1                             Documentary|Short  
-2                             Documentary|Short  
-3                                           NaN  
-4                                  Short|Horror  
-5                           Short|Comedy|Horror  
-6  Short|Action|Adventure|Comedy|Fantasy|Sci-Fi  
-7                    Short|Action|Crime|Western  
-8                                           NaN  
-9                                  Action|Short  
-```
-
-```python
-users = pd.read_csv('./data/movietweetings/users.dat', delimiter='::', engine='python', header=None, names = ['User ID', 'Twitter ID'])
-print(users.head())
-```
-
-```python
-   User ID  Twitter ID
-0        1   397291295
-1        2    40501255
-2        3   417333257
-3        4   138805259
-4        5  2452094989
-5        6   391774225
-6        7    47317010
-7        8    84541461
-8        9  2445803544
-9       10   995885060
-```
-
-```python
-ratings = pd.read_csv('./data/movietweetings/ratings.dat', delimiter='::', engine='python', header=None, names = ['User ID', 'Movie ID', 'Rating', 'Rating Timestamp'])
-print(ratings.head())
-```
-
-```python
-   User ID  Movie ID  Rating  Rating Timestamp
-0        1    111161      10        1373234211
-1        1    117060       7        1373415231
-2        1    120755       6        1373424360
-3        1    317919       6        1373495763
-4        1    454876      10        1373621125
-5        1    790724       8        1374641320
-6        1    882977       8        1372898763
-7        1   1229238       9        1373506523
-8        1   1288558       5        1373154354
-9        1   1300854       8        1377165712
-```
-
-```python
-import pandas as pd
-
-movies = pd.read_csv('./data/movietweetings/movies.dat', delimiter='::', engine='python', header=None, names = ['Movie ID', 'Movie Title', 'Genre'])
-users = pd.read_csv('./data/movietweetings/users.dat', delimiter='::', engine='python', header=None, names = ['User ID', 'Twitter ID'])
-ratings = pd.read_csv('./data/movietweetings/ratings.dat', delimiter='::', engine='python', header=None, names = ['User ID', 'Movie ID', 'Rating', 'Rating Timestamp'])
-```
-
-```python
-mask = movies.Genre.str.contains('comedy',case=False,na=False)
-```
-
-```python
-0    False
-1    False
-2    False
-3    False
-4    False
-5     True
-6     True
-7    False
-8    False
-9    False
-Name: Genre, dtype: bool
-
-```
-
-```python
-comedy = movies[mask]
-comdey_ids = comedy['Movie ID']
-
-```
-
-```python
-5      131
-6      417
-15    2354
-18    3863
-19    4099
-20    4100
-21    4101
-22    4210
-23    4395
-25    4518
-Name: Movie ID, dtype: int64
-
-```
-
-```python
-5      131
-6      417
-15    2354
-18    3863
-19    4099
-20    4100
-21    4101
-22    4210
-23    4395
-25    4518
-Name: Movie ID, dtype: int64
-
-```
-
-```python
-   User ID  Movie ID  Rating  Rating Timestamp
-0        1    111161      10        1373234211
-1        1    117060       7        1373415231
-2        1    120755       6        1373424360
-3        1    317919       6        1373495763
-4        1    454876      10        1373621125
-5        1    790724       8        1374641320
-6        1    882977       8        1372898763
-7        1   1229238       9        1373506523
-8        1   1288558       5        1373154354
-9        1   1300854       8        1377165712
-
-```
-
-```python
-combine = ratings.join(comedy, on='Movie ID', rsuffix='2')
-
-```
-
-```python
-combine = ratings.join(comedy.set_index('Movie ID'), on='Movie ID')
-print(combine.head(10))
-
-```
-
-```python
-   User ID  Movie ID  Rating  Rating Timestamp Movie Title Genre
-0        1    111161      10        1373234211         NaN   NaN
-1        1    117060       7        1373415231         NaN   NaN
-2        1    120755       6        1373424360         NaN   NaN
-3        1    317919       6        1373495763         NaN   NaN
-4        1    454876      10        1373621125         NaN   NaN
-5        1    790724       8        1374641320         NaN   NaN
-6        1    882977       8        1372898763         NaN   NaN
-7        1   1229238       9        1373506523         NaN   NaN
-8        1   1288558       5        1373154354         NaN   NaN
-9        1   1300854       8        1377165712         NaN   NaN
-
-```
-
-```python
-mask = pd.notnull(combine['Genre'])
-
-```
-
-```python
-result = combine[mask]
-print(result.head())
-
-```
-
-```python
-    User ID  Movie ID  Rating  Rating Timestamp             Movie Title  \
-12        1   1588173       9        1372821281      Warm Bodies (2013)   
-13        1   1711425       3        1372604878        21 & Over (2013)   
-14        1   2024432       8        1372703553   Identity Thief (2013)   
-17        1   2101441       1        1372633473  Spring Breakers (2012)   
-28        2   1431045       7        1457733508         Deadpool (2016)   
-
-                             Genre  
-12           Comedy|Horror|Romance  
-13                          Comedy  
-14    Adventure|Comedy|Crime|Drama  
-17              Comedy|Crime|Drama  
-28  Action|Adventure|Comedy|Sci-Fi  
-
-
-```
-
-```python
-    User ID  Movie ID  Rating  Rating Timestamp             Movie Title  \
-12        1   1588173       9        1372821281      Warm Bodies (2013)   
-13        1   1711425       3        1372604878        21 & Over (2013)   
-14        1   2024432       8        1372703553   Identity Thief (2013)   
-17        1   2101441       1        1372633473  Spring Breakers (2012)   
-28        2   1431045       7        1457733508         Deadpool (2016)   
-
-                             Genre  
-12           Comedy|Horror|Romance  
-13                          Comedy  
-14    Adventure|Comedy|Crime|Drama  
-17              Comedy|Crime|Drama  
-28  Action|Adventure|Comedy|Sci-Fi  
-```
-
-```python
-score_as_movie = result.groupby('Movie ID').mean()
-```
-
-```python
-               User ID  Rating  Rating Timestamp
-Movie ID                                        
-131       34861.000000     7.0      1.540639e+09
-417       34121.409091     8.5      1.458680e+09
-2354       6264.000000     8.0      1.456343e+09
-3863      43803.000000    10.0      1.430439e+09
-4099      25084.500000     7.0      1.450323e+09
-```
-
-```python
-score_as_movie.sort_values(by='Rating', ascending = False,inplace=True)
-score_as_movie
-```
-
-```python
-	User ID	Rating	Rating Timestamp
-Movie ID			
-7134690	30110.0	10.0	1.524974e+09
-416889	1319.0	10.0	1.543320e+09
-57840	23589.0	10.0	1.396802e+09
-5693562	50266.0	10.0	1.511024e+09
-5074	43803.0	10.0	1.428352e+09
-```
-
-```python
-watchs = result.groupby('Movie ID').agg(['count'])
-watchs2 = watchs['Rating']['count']
-```
-
-```python
-print(watchs2.head(20))
-```
-
-```python
-Movie ID
-131      1
-417     22
-2354     1
-3863     1
-4099     2
-4100     1
-4101     1
-4210     1
-4395     1
-4518     1
-4546     2
-4936     2
-5074     1
-5571     1
-6177     1
-6414     3
-6684     1
-6689     1
-7145     1
-7162     2
-Name: count, dtype: int64
-```
-
-```python
-watchs2.describe()
-```
-
-```python
-count    10740.000000
-mean        20.192086
-std         86.251411
-min          1.000000
-25%          1.000000
-50%          2.000000
-75%          7.000000
-max       1843.000000
-Name: count, dtype: float64
-```
-
-```python
-fig = plt.figure(figsize=(12,8))
-histn = plt.hist(watchs2[watchs2 <=19],19,histtype='step')
-plt.scatter([i+1 for i in range(len(histn[0]))],histn[0])
-```
-
-```python
-array([4383., 1507.,  787.,  541.,  356.,  279.,  209.,  163.,  158.,
-        118.,  114.,   90.,  104.,   81.,   80.,   73.,   62.,   65.,
-         52.])
-```
-
-```python
-sum(histn[0]) # 9222
-```
-
-```python
-n3 = result.groupby('Movie ID').agg(['count','mean','std'])
-n3r = n3[n3['Rating']['count']>=20]['Rating']
-```
-
-```python
-	count	mean	std
-Movie ID			
-417	22	8.500000	1.263027
-12349	68	8.485294	1.227698
-15324	20	8.350000	1.039990
-15864	51	8.431373	1.374844
-17925	44	8.636364	1.259216
-```
-
-```python
-nmin = (1.96**2*n3r['std']**2) / ( (n3r['mean']*0.025)**2 )
-```
-
-```python
-Movie ID
-417         135.712480
-12349       128.671290
-15324        95.349276
-15864       163.434005
-17925       130.668350
-```
-
-```python
-n3s = n3r[ n3r['count'] >= nmin ]
-```
-
-```python
-
-count	mean	std
-Movie ID			
-53604	129	8.635659	1.230714
-57012	207	8.449275	1.537899
-70735	224	8.839286	1.190799
-75686	209	8.095694	1.358885
-88763	296	8.945946	1.026984
-...	...	...	...
-6320628	860	7.966279	1.469924
-6412452	276	7.510870	1.389529
-6662050	22	10.000000	0.000000
-6966692	907	8.673649	1.286455
-7131622	1102	7.851180	1.751500
-173 rows × 3 columns
-```
-
-```python
-n3s_sort = n3s.sort_values(by='mean',ascending=False)
-```
-
-```python
-	count	mean	std
-Movie ID			
-6662050	22	10.000000	0.000000
-4921860	48	10.000000	0.000000
-5262972	28	10.000000	0.000000
-5512872	353	9.985836	0.266123
-3863552	199	9.010050	1.163372
-...	...	...	...
-1291150	647	6.327666	1.785968
-2557490	546	6.307692	1.858434
-1478839	120	6.200000	0.728761
-2177771	485	6.150515	1.523922
-1951261	1091	6.083410	1.736127
-173 rows × 3 columns
-```
-
-```python
-ms = movies.drop_duplicates(subset=['Movie ID'])
-ms = ms.set_index('Movie ID')
-n3s_final = n3s_drops.join(ms,on='Movie ID')
-```
-
-```python
-Movie Title
-Five Minutes (2017)
-MSG 2 the Messenger (2015)
-Avengers: Age of Ultron Parody (2015)
-Be Somebody (2016)
-Bajrangi Bhaijaan (2015)
-Back to the Future (1985)
-La vita 鐚?bella (1997)
-The Intouchables (2011)
-The Sting (1973)
-Coco (2017)
-Toy Story 3 (2010)
-3 Idiots (2009)
-Green Book (2018)
-Dead Poets Society (1989)
-The Apartment (1960)
-P.K. (2014)
-The Truman Show (1998)
-Am鑼卨ie (2001)
-Inside Out (2015)
-Toy Story 4 (2019)
-Toy Story (1995)
-Finding Nemo (2003)
-Dr. Strangelove or: How I Learned to Stop Worrying and Love the Bomb (1964)
-Home Alone (1990)
-Zootopia (2016)
-Up (2009)
-Monsters, Inc. (2001)
-La La Land (2016)
-Relatos salvajes (2014)
-En man som heter Ove (2015)
-Snatch (2000)
-Lock, Stock and Two Smoking Barrels (1998)
-How to Train Your Dragon 2 (2014)
-As Good as It Gets (1997)
-Guardians of the Galaxy (2014)
-The Grand Budapest Hotel (2014)
-Fantastic Mr. Fox (2009)
-Silver Linings Playbook (2012)
-Sing Street (2016)
-Deadpool (2016)
-Annie Hall (1977)
-Pride (2014)
-In Bruges (2008)
-Big Hero 6 (2014)
-Groundhog Day (1993)
-The Breakfast Club (1985)
-Little Miss Sunshine (2006)
-Deadpool 2 (2018)
-The Terminal (2004)
-```
-
-```python
-x = n3s_final['Movie Title'][:10].tolist()[::-1]
-y = n3s_final['count'][:10].tolist()[::-1]
-bar = (
-    Bar()
-    .add_xaxis(x)
-    .add_yaxis('评论数',y,category_gap='50%')
-    .reversal_axis()
-    .set_global_opts(title_opts=opts.TitleOpts(title="喜剧电影被评论次数"),
-                    toolbox_opts=opts.ToolboxOpts(),)
-)
-grid = (
-    Grid(init_opts=opts.InitOpts(theme=ThemeType.LIGHT))
-    .add(bar, grid_opts=opts.GridOpts(pos_left="30%"))
-)
-grid.render_notebook()
-```
-
-```python
-x = n3s_final['Movie Title'][:10].tolist()[::-1]
-y = n3s_final['mean'][:10].round(3).tolist()[::-1]
-bar = (
-    Bar()
-    .add_xaxis(x)
-    .add_yaxis('平均得分',y,category_gap='50%')
-    .reversal_axis()
-    .set_global_opts(title_opts=opts.TitleOpts(title="喜剧电影平均得分"),
-                    xaxis_opts=opts.AxisOpts(min_=8.0,name='平均得分'),
-                    toolbox_opts=opts.ToolboxOpts(),)
-)
-grid = (
-    Grid(init_opts=opts.InitOpts(theme=ThemeType.MACARONS))
-    .add(bar, grid_opts=opts.GridOpts(pos_left="30%"))
-)
-grid.render_notebook()
-```
-
-```python
-In [8]: s = pd.Series(list('ABCA'))
-In [9]: pd.get_dummies(s)
-Out[9]:
-   A  B  C
-0  1  0  0
-1  0  1  0
-2  0  0  1
-3  1  0  0
-```
-
-```python
-In [5]: s = pd.Series(list('abaccd'))
-In [6]: pd.get_dummies(s)
-Out[6]:
-   a  b  c  d
-0  1  0  0  0
-1  0  1  0  0
-2  1  0  0  0
-3  0  0  1  0
-4  0  0  1  0
-5  0  0  0  1
-```
-
-```python
-d:\source\test\settingwithcopy.py:9: SettingWithCopyWarning:
-A value is trying to be set on a copy of a slice from a DataFrame.
-Try using .loc[row_indexer,col_indexer] = value instead
-
-See the caveats in the documentation: http://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy 
-```
-
-```python
-tmp = df[df.a<4]
-tmp['c'] = 200
-```
-
-```python
-import pandas as  pd
-
-df = pd.DataFrame({'a':[1,3,5],'b':[4,2,7]},index=['a','b','c'])
-df.loc[df.a<4,'c'] = 100
-print(df)
-print('it\'s ok')
-
-tmp = df[df.a<4]
-tmp['c'] = 200
-print('-----tmp------')
-print(tmp)
-print('-----df-------')
-print(df)
-```
-
-```python
-   a  b      c
-a  1  4  100.0
-b  3  2  100.0
-c  5  7    NaN
-it's ok
-d:\source\test\settingwithcopy.py:9: SettingWithCopyWarning:
-A value is trying to be set on a copy of a slice from a DataFrame.
-Try using .loc[row_indexer,col_indexer] = value instead
-
-See the caveats in the documentation: http://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy     
-  tmp['c'] = 200
------tmp------
-   a  b    c
-a  1  4  200
-b  3  2  200
------df-------
-   a  b      c
-a  1  4  100.0
-b  3  2  100.0
-c  5  7    NaN
-```
-
-```python
-import numpy as np
-
-url = 'https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data'
-wid = np.genfromtxt(url, delimiter=',', dtype='float', usecols=[1])
-```
-
-```python
-array([3.5, 3. , 3.2, 3.1, 3.6, 3.9, 3.4, 3.4, 2.9, 3.1, 3.7, 3.4, 3. ,
-       3. , 4. , 4.4, 3.9, 3.5, 3.8, 3.8, 3.4, 3.7, 3.6, 3.3, 3.4, 3. ,
-       3.4, 3.5, 3.4, 3.2, 3.1, 3.4, 4.1, 4.2, 3.1, 3.2, 3.5, 3.1, 3. ,
-       3.4, 3.5, 2.3, 3.2, 3.5, 3.8, 3. , 3.8, 3.2, 3.7, 3.3, 3.2, 3.2,
-       3.1, 2.3, 2.8, 2.8, 3.3, 2.4, 2.9, 2.7, 2. , 3. , 2.2, 2.9, 2.9,
-       3.1, 3. , 2.7, 2.2, 2.5, 3.2, 2.8, 2.5, 2.8, 2.9, 3. , 2.8, 3. ,
-       2.9, 2.6, 2.4, 2.4, 2.7, 2.7, 3. , 3.4, 3.1, 2.3, 3. , 2.5, 2.6,
-       3. , 2.6, 2.3, 2.7, 3. , 2.9, 2.9, 2.5, 2.8, 3.3, 2.7, 3. , 2.9,
-       3. , 3. , 2.5, 2.9, 2.5, 3.6, 3.2, 2.7, 3. , 2.5, 2.8, 3.2, 3. ,
-       3.8, 2.6, 2.2, 3.2, 2.8, 2.8, 2.7, 3.3, 3.2, 2.8, 3. , 2.8, 3. ,
-       2.8, 3.8, 2.8, 2.8, 2.6, 3. , 3.4, 3.1, 3. , 3.1, 3.1, 3.1, 2.7,
-       3.2, 3.3, 3. , 2.5, 3. , 3.4, 3. ])
-      
-```
-
-```python
-smax = np.max(wid)
-smin = np.min(wid)
-
-In [51]: smax,smin
-Out[51]: (4.4, 2.0)
-```
-
-```python
-s = (wid - smin) / (smax - smin)
-```
-
-```python
-np.set_printoptions(precision=3)  
-```
-
-```markdown
-array([0.625, 0.417, 0.5  , 0.458, 0.667, 0.792, 0.583, 0.583, 0.375,
-       0.458, 0.708, 0.583, 0.417, 0.417, 0.833, 1.   , 0.792, 0.625,
-       0.75 , 0.75 , 0.583, 0.708, 0.667, 0.542, 0.583, 0.417, 0.583,
-       0.625, 0.583, 0.5  , 0.458, 0.583, 0.875, 0.917, 0.458, 0.5  ,
-       0.625, 0.458, 0.417, 0.583, 0.625, 0.125, 0.5  , 0.625, 0.75 ,
-       0.417, 0.75 , 0.5  , 0.708, 0.542, 0.5  , 0.5  , 0.458, 0.125,
-       0.333, 0.333, 0.542, 0.167, 0.375, 0.292, 0.   , 0.417, 0.083,
-       0.375, 0.375, 0.458, 0.417, 0.292, 0.083, 0.208, 0.5  , 0.333,
-       0.208, 0.333, 0.375, 0.417, 0.333, 0.417, 0.375, 0.25 , 0.167,
-       0.167, 0.292, 0.292, 0.417, 0.583, 0.458, 0.125, 0.417, 0.208,
-       0.25 , 0.417, 0.25 , 0.125, 0.292, 0.417, 0.375, 0.375, 0.208,
-       0.333, 0.542, 0.292, 0.417, 0.375, 0.417, 0.417, 0.208, 0.375,
-       0.208, 0.667, 0.5  , 0.292, 0.417, 0.208, 0.333, 0.5  , 0.417,
-       0.75 , 0.25 , 0.083, 0.5  , 0.333, 0.333, 0.292, 0.542, 0.5  ,
-       0.333, 0.417, 0.333, 0.417, 0.333, 0.75 , 0.333, 0.333, 0.25 ,
-       0.417, 0.583, 0.458, 0.417, 0.458, 0.458, 0.458, 0.292, 0.5  ,
-       0.542, 0.417, 0.208, 0.417, 0.583, 0.417])
-```
-
-```python
-import seaborn as sns
-sns.distplot(s,kde=False,rug=True)
-```
-
-```python
-sns.distplot(s,hist=True,kde=True,rug=True)
-```
-
-```python
-from scipy import stats
-sns.distplot(s, kde=False, fit = stats.gamma)
-```
-
-```python
-from scipy import stats
-sns.distplot(s, kde=False, fit = stats.dgamma)
-```
-
-```python
-import pandas as pd
-import numpy as np
-
-df = pd.read_csv("big_data.csv", 
-skiprows = 
-lambda x: x>0 and np.random.rand() > 0.01)
-
-print("The shape of the df is {}. 
-It has been reduced 100 times!".format(df.shape))
-```
-
-```python
-from flask import Flask
-
-App = Flask(__name__)
-```
-
-```python
-@App.route('/')
-def index():
-    return "hello world"
-```
-
-```python
-if __name__ == "__main__":
-    App.run(debug=True)
-```
-
-```python
-* Debug mode: on
- * Restarting with stat
- * Debugger is active!
- * Debugger PIN: 663-788-611
- * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
-```
-
-```python
- 27.0.0.1 - - [03/Feb/2020 21:26:50] "GET / HTTP/1.1" 200 -
- ```
-
- 以上就是flask的hello world 版
-
-#### 2 Flask之数据入库操作
-
-数据持久化就是将数据写入到数据库存储的过程。
-
-本例子使用`sqlite3`数据库。
-
-1)导入`sqlite3`，未安装前使用命令`pip install sqlite3`
-
-创建一个`py`文件：`sqlite3_started.py`，并写下第一行代码：
-```
-
-```
-2)手动创建一个数据库实例`db`, 命名`test.db`
-
-3)创建与数据库实例`test.db`的连接:
-```
-
-```
-
-4)拿到连接`conn`的cursor
-```
-
-```
-
-5)创建第一张表`books`
-
-共有四个字段：`id`,`sort`,`name`,`price`，类型分别为：`int`,`int`,`text`,`real`. 其中`id`为`primary key`. 主键的取值必须是唯一的(`unique`)，否则会报错。
-
-
-```
-
-```
-第一次执行上面语句，表`books`创建完成。当再次执行时，就会报`重复建表`的错误。需要优化脚本，检查表是否存在`IF NOT EXISTS books`，不存在再创建：
-```
-
-```
-
-6)插入一行记录
-
-共为4个字段赋值
-
-```
-
-```
-
-7)一次插入多行记录
-
-先创建一个list:`books`，使用`executemany`一次插入多行。
-```
-
-```
-
-8)提交
-
-提交后才会真正生效，写入到数据库
-
-```
-
-```
-
-9)关闭期初建立的连接conn
-
-务必记住手动关闭，否则会出现内存泄漏
-```
-
-```
-
-10)查看结果
-例子君使用`vs code`，在扩展库中选择：`SQLite`安装。
-
-![image-20200208211721377](./img/image-20200208211721377.png)
-
-新建一个`sq`文件：`a.sql`，内容如下：
-
-```
-
-```
-右键`run query`，得到表`books`插入的4行记录可视化图：
-
-![image-20200208211806853](./img/image-20200208211806853.png)
-
-以上十步就是sqlite3写入数据库的主要步骤，作为Flask系列的第二篇，为后面的前端讲解打下基础。
-
-#### 3 Flask各层调用关系
-
-这篇介绍Flask和B/S模式，即浏览器/服务器模式，是接下来快速理解Flask代码的关键理论篇：**理解Views、models和渲染模板层的调用关系**。
-
-1) 发出请求
-
-当我们在浏览器地址栏中输入某个地址，按回车后，完成第一步。
-
-2) 视图层 views接收1)步发出的请求，Flask中使用解释器的方式处理这个求情，实例代码如下，它通常涉及到调用models层和模板文件层
-
-```
-
-```
-
-3) models层会负责创建数据模型，执行CRUD操作
-
-4) 模板文件层处理html模板
-
-5) 组合后返回html
-
-6) models层和html模板组合后返回给views层
-
-7）最后views层响应并渲染到浏览器页面，我们就能看到请求的页面。
-
-完整过程图如下所示：
-
-![image-20200211152007983](./img/web1.png)
-
-读者朋友们，如果你和例子君一样都是初学Flask编程，需要好好理解上面的过程。理解这些对于接下来的编程会有一定的理论指导，方向性指导价值。
-
-### Python 问答
-
-#### Python 如何生成二维码？
-
-
-
-
-
-## qrcode
-
-今天先来解答如何生成二维码。Python的`qrcode`包支持生成二维码。
-
-用法也很简单：
-
-```
-
-```
-
-生成的二维码如下：
-
-![](https://imgkr2.cn-bj.ufileos.com/f0b08c53-0107-483b-bbe5-072bebc58e8d.png?UCloudPublicKey=TOKEN_8d8b72be-579a-4e83-bfd0-5f6ce1546f13&Signature=rVtaeBWhzLPPq%252BFCVtiOv6rS0tI%253D&Expires=1603544615)
-
-
-大家微信扫描后，会出现我的二维码。
-
-另外，还可以设置二维码的颜色等样式：
-
-```
-
-```
-
-生成一个orange的二维码：
-
-![](https://imgkr2.cn-bj.ufileos.com/cbd26fd8-27cf-4630-935f-6896822ce483.png?UCloudPublicKey=TOKEN_8d8b72be-579a-4e83-bfd0-5f6ce1546f13&Signature=uy1r24x%252Fp5QpI5Wy10Ebdaz%252BpLM%253D&Expires=1603544681)
-
-更多样式，大家可以自己去玩耍。
-
-## Python小项目：句子KWIC显示
-
-上下文关键字（KWIC, Key Word In Context）是最常见的多行协调显示格式。
-
-此小项目描述：输入一系列句子，给定一个给定单词，每个句子中至少会出现一次给定单词。目标输出，给定单词按照KWIC显示，KWIC显示的基本要求：待查询单词居中，前面`pre`序列右对齐，后面`post`序列左对齐，待查询单词前和后长度相等，若输入句子无法满足要求，用空格填充。
-
-输入参数：输入句子sentences, 待查询单词selword, 滑动窗口长度`window_len`
-
-举例，输入如下六个句子，给定单词`secure`，输出如下字符串：
-
-```
-
-```
-
-请补充实现下面函数：
-
-```
+# jackzhenguo/python-small-examples, 0 blocks.
 
 # jadore801120/attention-is-all-you-need-pytorch, 6 blocks.
 
@@ -3046,31 +1924,25 @@ npm run build
 
 # nltk/nltk, 0 blocks.
 
-# onnx/onnx, 12 blocks.
+# onnx/onnx, 10 blocks.
 
 ```
-conda install -c conda-forge onnx
-```
-
-```
-# Use conda-forge protobuf, as default doesn't come with protoc
-conda install -c conda-forge protobuf numpy
-```
-
-```
+pip install numpy protobuf==3.11.3
 pip install onnx
+```
+
+```
+conda install -c conda-forge numpy protobuf==3.11.3 libprotobuf=3.11.3
+conda install -c conda-forge onnx
 ```
 
 ```
 git clone https://github.com/onnx/onnx.git
 cd onnx
 git submodule update --init --recursive
-python setup.py install
-```
-
-```
-sudo apt-get install protobuf-compiler libprotoc-dev
-pip install onnx
+# prefer lite proto
+set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
+pip install -e .
 ```
 
 ```
@@ -3078,52 +1950,33 @@ git clone https://github.com/protocolbuffers/protobuf.git
 cd protobuf
 git checkout v3.11.3
 cd cmake
-# Explicitly set -Dprotobuf_MSVC_STATIC_RUNTIME=OFF to make sure protobuf does not statically link to runtime library
-cmake -G -A -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF -DCMAKE_INSTALL_PREFIX=<protobuf_install_dir>
-# For example:
-# cmake -G "Visual Studio 16 2019" -A x64 -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF -DCMAKE_INSTALL_PREFIX=..\install
+cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_INSTALL_PREFIX=<protobug_install_dir> -Dprotobuf_MSVC_STATIC_RUNTIME=ON -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF .
 msbuild protobuf.sln /m /p:Configuration=Release
 msbuild INSTALL.vcxproj /p:Configuration=Release
 ```
 
 ```
-# Get ONNX
-git clone https://github.com/onnx/onnx.git
-cd onnx
+git clone https://github.com/protocolbuffers/protobuf.git
+cd protobuf
+git checkout v3.11.3
 git submodule update --init --recursive
-
-# Set environment variables to find protobuf and turn off static linking of ONNX to runtime library.
-# Even better option is to add it to user\system PATH so this step can be performed only once.
-# For more details check https://docs.microsoft.com/en-us/cpp/build/reference/md-mt-ld-use-run-time-library?view=vs-2017
-set PATH=<protobuf_install_dir>\bin;<protobuf_install_dir>\include;<protobuf_install_dir>\libs;%PATH%
-set USE_MSVC_STATIC_RUNTIME=0
-
-# use the static installed protobuf
-set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DProtobuf_USE_STATIC_LIBS=ON
-
-# Optional: Set environment variable `ONNX_ML=1` for onnx-ml
-
-# Build ONNX
-python setup.py install
+mkdir build_source && cd build_source
+cmake ../cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
+make -j$(nproc)
+make install
 ```
 
 ```
-# Use conda-forge protobuf
-conda install -c conda-forge numpy libprotobuf=3.11.3 protobuf
-
-# Get ONNX
-git clone https://github.com/onnx/onnx.git
-cd onnx
-git submodule update --init --recursive
-
-# Set environment variable for ONNX to use protobuf shared lib
-set USE_MSVC_STATIC_RUNTIME=0
-set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DProtobuf_USE_STATIC_LIBS=OFF -DONNX_USE_LITE_PROTO=ON
-
-# Build ONNX
-# Optional: Set environment variable `ONNX_ML=1` for onnx-ml
-
-python setup.py install
+export NUM_CORES=`sysctl -n hw.ncpu`
+brew update
+brew install autoconf && brew install automake
+wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.3/protobuf-cpp-3.11.3.tar.gz
+tar -xvf protobuf-cpp-3.11.3.tar.gz
+cd protobuf-3.11.3
+mkdir build_source && cd build_source
+cmake ../cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
+make -j${NUM_CORES}
+make install
 ```
 
 ```
@@ -3597,7 +2450,7 @@ data = input_data.read_data_sets('data/fashion', source_url='http://fashion-mnis
 }
 ```
 
-# zihangdai/xlnet, 7 blocks.
+# zihangdai/xlnet, 11 blocks.
 
 ```shell
   CUDA_VISIBLE_DEVICES=0,1,2,3 python run_classifier.py \
@@ -3622,9 +2475,7 @@ data = input_data.read_data_sets('data/fashion', source_url='http://fashion-mnis
     --is_regression=True
   ```
 
-- Evaluate the finetuning results with a single GPU by
-
-  ```shell
+```shell
   CUDA_VISIBLE_DEVICES=0 python run_classifier.py \
     --do_train=False \
     --do_eval=True \
@@ -3645,33 +2496,12 @@ data = input_data.read_data_sets('data/fashion', source_url='http://fashion-mnis
   # Expected performance: "eval_pearsonr 0.916+ "
   ```
 
-**Notes**:
-
-- In the context of GPU training, `num_core_per_host` denotes the number of GPUs to use.
-- In the multi-GPU setting, `train_batch_size` refers to the <u>per-GPU batch size</u>.
-- `eval_all_ckpt` allows one to evaluate all saved checkpoints (save frequency is controlled by `save_steps`) after training finishes and choose the best model based on dev performance.
-- `data_dir` and `output_dir` refer to the directories of the "raw data" and "preprocessed tfrecords" respectively, while `model_dir` is the working directory for saving checkpoints and tensorflow events. **`model_dir` should be set as a separate folder to `init_checkpoint`.**
-- To try out <u>XLNet-base</u>, one can simply set `--train_batch_size=32` and `--num_core_per_host=1`, along with according changes in `init_checkpoint` and `model_config_path`.
-- For GPUs with smaller RAM, please proportionally decrease the `train_batch_size` and increase `num_core_per_host` to use the same training setting.
-- **Important**: we separate the training and evaluation into "two phases", as using multi GPUs to perform evaluation is tricky (one has to correctly separate the data across GPUs). To ensure correctness, we only support single-GPU evaluation for now.
-
-
-#### (2) IMDB: movie review sentiment classification (with TPU V3-8)
-
-- Download and unpack the IMDB dataset by running
-
-  ```shell
+```shell
   wget http://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz
   tar zxvf aclImdb_v1.tar.gz
   ```
 
-- Launch a Google cloud TPU V3-8 instance (see the [Google Cloud TPU tutorial](https://cloud.google.com/tpu/docs/tutorials/mnist) for how to set up Cloud TPUs).
-
-- Set up your Google storage bucket path `$GS_ROOT` and move the IMDB dataset and pretrained checkpoint into your Google storage.
-
-- Perform TPU finetuning with XLNet-Large by running
-
-  ```shell
+```shell
   python run_classifier.py \
     --use_tpu=True \
     --tpu=${TPU_NAME} \
@@ -3700,110 +2530,111 @@ data = input_data.read_data_sets('data/fashion', source_url='http://fashion-mnis
   # Expected performance: "eval_accuracy 0.962+ "
   ```
 
-**Notes**:
+```shell
+mkdir -p ${SQUAD_DIR} && cd ${SQUAD_DIR}
+wget https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v2.0.json
+wget https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v2.0.json
+```
 
-- To obtain the SOTA on the IMDB dataset, using sequence length 512 is **necessary**. Therefore, we show how this can be done with a TPU V3-8.
-- Alternatively, one can use a sequence length smaller than 512, a smaller batch size, or switch to XLNet-base to train on GPUs. But performance drop is expected.
-- Notice that the `data_dir` and `spiece_model_file` both use a local path rather than a Google Storage path. The reason is that data preprocessing is actually performed locally. Hence, using local paths leads to a faster preprocessing speed.
+```python
+import xlnet
 
-### SQuAD2.0
+# some code omitted here...
+# initialize FLAGS
+# initialize instances of tf.Tensor, including input_ids, seg_ids, and input_mask
 
-The code for the SQuAD dataset is included in `run_squad.py`.
+# XLNetConfig contains hyperparameters that are specific to a model checkpoint.
+xlnet_config = xlnet.XLNetConfig(json_path=FLAGS.model_config_path)
 
-To run the code:
+# RunConfig contains hyperparameters that could be different between pretraining and finetuning.
+run_config = xlnet.create_run_config(is_training=True, is_finetune=True, FLAGS=FLAGS)
 
-(1) Download the SQuAD2.0 dataset into `$SQUAD_DIR` by:
+# Construct an XLNet model
+xlnet_model = xlnet.XLNetModel(
+    xlnet_config=xlnet_config,
+    run_config=run_config,
+    input_ids=input_ids,
+    seg_ids=seg_ids,
+    input_mask=input_mask)
 
+# Get a summary of the sequence using the last hidden state
+summary = xlnet_model.get_pooled_out(summary_type="last")
+
+# Get a sequence output
+seq_out = xlnet_model.get_sequence_output()
+
+# build your applications based on `summary` or `seq_out`
+```
+
+```python
+import sentencepiece as spm
+from prepro_utils import preprocess_text, encode_ids
+
+# some code omitted here...
+# initialize FLAGS
+
+text = "An input text string."
+
+sp_model = spm.SentencePieceProcessor()
+sp_model.Load(FLAGS.spiece_model_file)
+text = preprocess_text(text, lower=FLAGS.uncased)
+ids = encode_ids(sp_model, text)
+```
+
+```shell
+python data_utils.py \
+	--bsz_per_host=32 \
+	--num_core_per_host=16 \
+	--seq_len=512 \
+	--reuse_len=256 \
+	--input_glob=*.txt \
+	--save_dir=${SAVE_DIR} \
+	--num_passes=20 \
+	--bi_data=True \
+	--sp_path=spiece.model \
+	--mask_alpha=6 \
+	--mask_beta=1 \
+	--num_predict=85
+```
+
+```bash
+spm_train \
+	--input=$INPUT \
+	--model_prefix=sp10m.cased.v3 \
+	--vocab_size=32000 \
+	--character_coverage=0.99995 \
+	--model_type=unigram \
+	--control_symbols=<cls>,<sep>,<pad>,<mask>,<eod> \
+	--user_defined_symbols=<eop>,.,(,),",-,–,£,€ \
+	--shuffle_input_sentence \
+	--input_sentence_size=10000000
 ```
 
 ```
+This is the first sentence.
+This is the second sentence and also the end of the paragraph.<eop>
+Another paragraph.
 
-(2) Perform data preprocessing using the script `scripts/prepro_squad.sh`.
-
-- This will take quite some time in order to accurately map character positions (raw data) to sentence piece positions (used for training).
-
-- For faster parallel preprocessing, please refer to the flags `--num_proc` and `--proc_id` in `run_squad.py`.
-
-(3) Perform training and evaluation.
-
-For the best performance, XLNet-Large uses <u>sequence length 512</u> and <u>batch size 48</u> for training.
-
-- As a result, reproducing the best result with GPUs is quite difficult.
-
-- For training with one TPU v3-8, one can simply run the script `scripts/tpu_squad_large.sh` after both the TPU and Google storage have been setup.
-- `run_squad.py` will automatically perform threshold searching on the dev set of squad and output the score. With `scripts/tpu_squad_large.sh`, the expected F1 score should be around 88.6 (median of our multiple runs).
-
-Alternatively, one can use XLNet-Base with GPUs (e.g. three V100). One set of reasonable hyper-parameters can be found in the script `scripts/gpu_squad_base.sh`.
-
-
-### RACE reading comprehension
-
-The code for the reading comprehension task [RACE](https://www.cs.cmu.edu/~glai1/data/race/) is included in `run_race.py`.
-
-- Notably, the average length of the passages in RACE is over 300 tokens (not peices), which is <u>significantly longer</u> than other popular reading comprehension datasets such as SQuAD.
-- Also, many questions can be very difficult and requires complex reasoning for machines to solve (see [one example here](misc/race_example.md)).
-
-
-To run the code:
-
-(1) Download the RACE dataset from the [official website](https://www.cs.cmu.edu/~glai1/data/race/) and unpack the raw data to `$RACE_DIR`.
-
-(2) Perform training and evaluation:
-
-- The SOTA performance (accuracy 81.75) of RACE is produced using XLNet-Large with sequence length 512 and batch size 32, which requires a large TPU v3-32 in the pod setting. Please refer to the script `script/tpu_race_large_bsz32.sh` for this setting.
-- Using XLNet-Large with sequence length 512 and batch size 8 on a TPU v3-8 can give you an accuracy of around 80.3 (see `script/tpu_race_large_bsz8.sh`).
-
-### Using Google Colab
-
-[An example](notebooks/colab_imdb_gpu.ipynb) of using Google Colab with GPUs has been provided. Note that since the hardware is constrained in the example, the results are worse than the best we can get. It mainly serves as an example and should be modified accordingly to maximize performance.
-
-
-## Custom Usage of XLNet
-
-### XLNet Abstraction
-
-For finetuning, it is likely that you will be able to modify existing files such as `run_classifier.py`, `run_squad.py` and `run_race.py` for your task at hand. However, we also provide an abstraction of XLNet to enable more flexible usage. Below is an example:
-
+Another document starts here.
 ```
 
-```
-
-### Tokenization
-
-Below is an example of doing tokenization in XLNet:
-```
-
-```
-where `FLAGS.spiece_model_file` is the SentencePiece model file in the same zip as the pretrained model, `FLAGS.uncased` is a bool indicating whether to do uncasing.
-
-
-## Pretraining with XLNet
-
-Refer to `train.py` for pretraining on TPUs and `train_gpu.py` for pretraining on GPUs. First we need to preprocess the text data into tfrecords.
-
-```
-
-```
-
-where `input_glob` defines all input text files, `save_dir` is the output directory for tfrecords, and `sp_path` is a [Sentence Piece](https://github.com/google/sentencepiece) model. Here is our script to train the Sentence Piece model
-
-```
-
-```
-
-Special symbols are used, including `control_symbols` and `user_defined_symbols`. We use `<eop>` and `<eod>` to denote End of Paragraph and End of Document respectively.
-
-The input text files to `data_utils.py` must use the following format:
-* Each line is a sentence.
-* An empty line means End of Document.
-* (Optional) If one also wants to model paragraph structures, `<eop>` can be inserted at the end of certain lines (without any space) to indicate that the corresponding sentence ends a paragraph.
-
-For example, the text input file could be:
-```
-
-```
-
-After preprocessing, we are ready to pretrain an XLNet. Below are the hyperparameters used for pretraining XLNet-Large:
-
+```shell
+python train.py
+  --record_info_dir=$DATA/tfrecords \
+  --train_batch_size=2048 \
+  --seq_len=512 \
+  --reuse_len=256 \
+  --mem_len=384 \
+  --perm_size=256 \
+  --n_layer=24 \
+  --d_model=1024 \
+  --d_embed=1024 \
+  --n_head=16 \
+  --d_head=64 \
+  --d_inner=4096 \
+  --untie_r=True \
+  --mask_alpha=6 \
+  --mask_beta=1 \
+  --num_predict=85
 ```
 
