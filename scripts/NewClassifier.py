@@ -122,7 +122,7 @@ class NewClassifier:
         #     if self._in_readme(kw=kw, readme=r.text):
         #         self.score -= 2
         # del r
-        self._check_code_blocks(full_name)
+        self._check_code_blocks(repo_slug=full_name, test='A')
 
     # Sub-method for regex in README to find bad keywords.
     @staticmethod
@@ -131,13 +131,25 @@ class NewClassifier:
         return True if p.search(readme) else False
 
     # Sub-method for checking code blocks for red flags.
-    def _check_code_blocks(self, repo_slug):
+    def _check_code_blocks(self, repo_slug: str, test: str='A'):
         assert (repo_slug is not None), 'No full_name provided.'
 
         # Get the readme raw...
         readme_url = g.get_repo(repo_slug).get_readme().download_url
-        r = requests.get(readme_url)
-        time.sleep(1)
+        r = None
+
+        # This uses requests:
+        if test == 'A':
+            requested = False
+            seconds = 1
+            while not requested:
+                try:
+                    r = requests.get(readme_url)
+                    requested = True
+                    time.sleep(.25)
+                except:
+                    time.sleep(seconds)
+                    seconds *= 2
 
         # Search for the pattern in the raw markdown:
         code_blocks = FENCED_CODE.findall(r.text)
