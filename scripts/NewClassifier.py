@@ -1,5 +1,6 @@
 # Justin Ventura | Carnegie Mellon University
 
+from requests.auth import HTTPBasicAuth
 from RepositoryInfo import RepositoryInfo as Repo
 from RepositoryInfo import DEFAULT
 from github import Github
@@ -12,6 +13,10 @@ import os
 This is the newest version of the classifier, where it will
 filter out useless stuff, then pay closer attention to the
 other details besides key words.
+
+
+
+NOTES: split download and analysis into two separate stages.
 """
 
 # NOTE: Here are the newly formed keyword lists:
@@ -122,7 +127,7 @@ class NewClassifier:
         #     if self._in_readme(kw=kw, readme=r.text):
         #         self.score -= 2
         # del r
-        self._check_code_blocks(repo_slug=full_name, test='A')
+        self._check_code_blocks(repo_slug=full_name)
 
     # Sub-method for regex in README to find bad keywords.
     @staticmethod
@@ -144,7 +149,7 @@ class NewClassifier:
             seconds = 1
             while not requested:
                 try:
-                    r = requests.get(readme_url)
+                    r = requests.get(readme_url, auth=HTTPBasicAuth('user', 'pass'))
                     requested = True
                     time.sleep(.25)
                 except:
