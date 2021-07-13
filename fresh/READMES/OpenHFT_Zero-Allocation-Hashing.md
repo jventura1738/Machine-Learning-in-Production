@@ -1,0 +1,124 @@
+== Zero-Allocation Hashing
+
+==== Version
+[#image-maven]
+[caption="", link=https://maven-badges.herokuapp.com/maven-central/net.openhft/zero-allocation-hashing]
+image::https://maven-badges.herokuapp.com/maven-central/net.openhft/zero-allocation-hashing/badge.svg[]
+[caption="", link=https://javadoc.io/doc/net.openhft/zero-allocation-hashing]
+image::https://javadoc.io/badge2/net.openhft/zero-allocation-hashing/javadoc.svg[]
+
+=== Overview
+This project provides a Java API for hashing any sequence of bytes in Java, including all kinds of
+primitive arrays, buffers, `CharSequence`s and more.
+
+Written for Java 7+ under Apache 2.0 license.
+
+The key difference compared to other similar projects, e.g.
+https://guava.dev/releases/28.1-jre/api/docs/com/google/common/hash/package-summary.html[Guava hashing],
+is that this has no object allocation during the hash computation and does not use `ThreadLocal`.
+
+The implementation utilises native access where possible, but is also platform-endianness-agnostic.
+This provides consistent results whatever the byte order, while only moderately affecting
+performance.
+
+Currently `long`-valued hash function interface is defined for 64-bit hash, and `long[]`-valued hash
+function interface for more than 64-bit hash, with the following implementations (in alphabetical
+order):
+
+ - *https://github.com/google/cityhash[CityHash], version 1.1* (latest; 1.1.1 is a C++
+ language-specific maintenance release).
+
+ -  Two algorithms from *https://github.com/google/farmhash[FarmHash]*: `farmhashna` (introduced
+ in FarmHash 1.0) and `farmhashuo` (introduced in FarmHash 1.1).
+
+ - *https://github.com/jandrewrogers/MetroHash[MetroHash]* (using the metrohash64_2 initialization vector).
+
+ - *https://github.com/aappleby/smhasher/wiki/MurmurHash3[MurmurHash3]* 128-bit and low 64-bit.
+
+ - *https://github.com/wangyi-fudan/wyhash[wyHash]*, version 3.
+
+ - *https://github.com/Cyan4973/xxHash[xxHash]*.
+ 
+ - *https://github.com/Cyan4973/xxHash[xxh3, xxh128]*, 128-bit and 64 bit.
+
+These are thoroughly tested with
+*https://www.oracle.com/java/technologies/java-se-support-roadmap.html[LTS JDKs]*
+7, 8, and 11, the latest non-LTS JDKs 16 on both little- and big- endian platforms.
+Other non-LTS JDKs from 9 should also work, but they will not be tested from half year after EOL.
+
+==== Performance
+
+Tested on Intel Core i7-4870HQ CPU @ 2.50GHz
+|===
+|Algorithm |Speed, GB/s |Bootstrap, ns
+
+|xxHash |9.5 |6
+|FarmHash `na` |9.0 |6
+|FarmHash `uo` |7.2 |7
+|CityHash |7.0 |7
+|MurmurHash |5.3 |12
+|MetroHash |https://github.com/OpenHFT/Zero-Allocation-Hashing/issues/28[??] | https://github.com/OpenHFT/Zero-Allocation-Hashing/issues/28[??]
+|WyHash |https://github.com/OpenHFT/Zero-Allocation-Hashing/issues/28[??] |https://github.com/OpenHFT/Zero-Allocation-Hashing/issues/28[??]
+
+|===
+
+To sum up,
+
+==== When to use Zero-Allocation Hashing
+ * You need to hash plain byte sequences, memory blocks or "flat" objects.
+ * You want zero-allocation and good performance (at Java scale).
+ * You need hashing to be agile with regards to byte ordering.
+
+==== When _not_ to use Zero-Allocation Hashing
+ * You need to hash POJOs whose actual data is scattered in memory between managed objects.
+   There is no simple way to hash these using this project, for example, classes such as:
++
+[source, Java]
+----
+    class Person {
+        String givenName, surName;
+        int salary;
+    }
+----
+
+ * You need to hash byte sequences of unknown length, for the simpliest example,
+   `Iterator<Byte>`.
+
+ * You need to transform the byte sequence (e.g. encode or decode it with a specific coding),
+   and hash the resulting byte sequence on the way without dumping it to memory.
+
+==== Java Doc
+See http://javadoc.io/doc/net.openhft/zero-allocation-hashing/0.15
+
+== Quick start
+
+Gradle:
+[source, groovy]
+----
+dependencies {
+    implementation 'net.openhft:zero-allocation-hashing:0.15'
+}
+----
+
+Or Maven:
+[source, xml]
+----
+<dependency>
+  <groupId>net.openhft</groupId>
+  <artifactId>zero-allocation-hashing</artifactId>
+  <version>0.15</version>
+</dependency>
+----
+
+In Java:
+[source, Java]
+----
+long hash = LongHashFunction.wy_3().hashChars("hello");
+----
+
+See *http://javadoc.io/doc/net.openhft/zero-allocation-hashing/0.15[JavaDocs]* for more
+information.
+
+== Contributions are most welcome!
+
+See the list of https://github.com/OpenHFT/Zero-Allocation-Hashing/issues[open issues].

@@ -1,0 +1,103 @@
+= Padrino
+
+Padrino is the godfather of Sinatra. Follow us on
+{www.padrinorb.com}[http://padrinorb.com] and on twitter
+{@padrinorb}[http://twitter.com/padrinorb]. Join us on {gitter}[https://gitter.im/padrino/padrino-framework]
+
+{<img src="https://api.travis-ci.org/padrino/padrino-framework.svg" alt="Build Status" />}[http://travis-ci.org/padrino/padrino-framework]
+{<img src="https://api.codeclimate.com/v1/badges/900d6e424498f0e2b7ff/maintainability" alt="CodeClimate Maintainability score" />}[https://codeclimate.com/github/padrino/padrino-framework/maintainability]
+{<img src="https://badges.gitter.im/Join Chat.svg" />}[https://gitter.im/padrino/padrino-framework]
+{<img src='https://www.codetriage.com/padrino/padrino-framework/badges/users.svg' alt='Code Triagers Badge' />}[https://www.codetriage.com/padrino/padrino-framework]
+
+== Preface
+
+Padrino is a ruby framework built upon the excellent {Sinatra Web Library}[http://www.sinatrarb.com].
+Sinatra is a DSL for creating simple web applications in Ruby quickly and with minimal effort.
+This framework tries to make it as fun and easy as possible to code more advanced web applications by
+building upon the Sinatra philosophies and foundations.
+
+== Introduction
+
+Many people love that Sinatra is simple and lightweight but soon begin to miss the great deal
+of functionality provided by other web frameworks such as Django or Rails when building non-trivial applications.
+
+Our goal with this framework is to adhere to the essence of Sinatra and at the same time create a standard library
+of tools, helpers and components that will make Sinatra suitable for increasingly complex applications.
+
+Here is a brief overview of functionality provided by the Padrino framework:
+
+Agnostic:: Full support for many popular testing, templating, mocking, and data storage choices.
+Generators:: Create Padrino applications, models, controllers i.e: padrino-gen project.
+Mountable:: Unlike other ruby frameworks, principally designed for mounting multiple apps.
+Routing:: Full url named routes, named params, before/after filter support.
+Tag Helpers:: View helpers such as: tag, content_tag, input_tag.
+Asset Helpers:: View helpers such as: link_to, image_tag, javascript_include_tag.
+Form Helpers:: Builder support such as: form_tag, form_for, field_set_tag, text_field.
+Text Helpers:: Useful formatting like: time_ago_in_words, js_escape_html, sanitize_html.
+Mailer:: Fast and simple delivery support for sending emails (akin to ActionMailer).
+Caching:: Simple route and fragment caching to easily speed up your web requests.
+Admin:: Built-in Admin interface (like Django)
+Logging:: Provide a unified logger that can interact with your ORM or any library.
+Reloading::  Automatically reloads server code during development.
+Localization:: Full support of I18n language localization and can auto-set user's locale.
+
+Keep in mind, developers are able to individually pull in these modular components
+{into existing Sinatra applications}[http://padrinorb.com/guides/advanced-usage/standalone-usage-in-sinatra/]
+or use them altogether for a full-stack Padrino application.
+
+== Installation
+
+To install the padrino framework, simply grab the latest version from {RubyGems}[https://rubygems.org]:
+
+  $ gem install padrino
+
+This will install the necessary padrino gems to get you started.
+Now you are ready to use this gem to enhance your Sinatra projects or to create new Padrino applications.
+
+For a more detailed look at installing Padrino,
+check out the {Installation Guide}[http://padrinorb.com/guides/getting-started/installation/].
+
+== Usage
+
+Padrino is a framework which builds on the existing functionality of Sinatra and provides a variety of
+additional tools and helpers to build upon that foundation. This README and Padrino documentation in general will focus on the enhancements to the core Sinatra functionality. To use Padrino, one should be familiar with the basic
+usage of Sinatra itself.
+
+You can also check out the {Why Learn Padrino?}[http://padrinorb.com/guides/introduction/why-learn-padrino/] introduction to learn more about how Sinatra and Padrino work together.
+
+For information on how to use a specific gem in isolation within an existing Sinatra project, checkout the guide for {Using Padrino within Sinatra}[http://padrinorb.com/guides/advanced-usage/standalone-usage-in-sinatra/].
+
+== Getting Started
+
+Once a developer understands Sinatra, Padrino is quite easy to get comfortable with since Padrino is simply a superset of existing Sinatra functionality!
+
+First, be sure to read over the {Getting Started}[http://padrinorb.com/guides/getting-started/overview/] guide
+to learn more about how Sinatra and Padrino work together.
+
+Best way to learn more about building Padrino applications is to read following resources:
+
+* {Padrino Guides}[http://padrinorb.com/guides] - Guides outlining the major functionality within Padrino.
+* {Blog Tutorial}[http://padrinorb.com/guides/getting-started/blog-tutorial/] - Step-by-step guide to building a blog application with Padrino.
+* {Padrino API}[http://www.rubydoc.info/github/padrino/padrino-framework] - YARD documentation for the Padrino framework.
+* {Quick Overview}[http://padrinorb.com/guides/getting-started/basic-projects/] - Outlines basic generation commands.
+
+
+The individual Padrino sub-gems also contain README's which outlines their functionality.
+
+== Further Questions
+
+Can't find an answer in the resources above?
+
+* Ask any questions on the {gitter channel}[https://gitter.im/padrino/padrino-framework].
+
+== Bug reporting
+
+Log it onto Github by {creating a new issue}[http://github.com/padrino/padrino-framework/issues].
+
+Be sure to include all relevant information, like the versions of Padrino, Rack, Sinatra, Ruby and operating system you are using.
+
+A minimal project showing the issue published on Github with Gemfile.lock is also extremely helpful.
+
+== Copyright
+
+Copyright (c) 2010-2016 Padrino. See LICENSE for details.

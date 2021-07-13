@@ -1,0 +1,124 @@
+<center>
+  
+![](https://img.shields.io/packagist/dt/Athlon1600/youtube-downloader.svg) ![](https://img.shields.io/github/last-commit/Athlon1600/youtube-downloader.svg) ![](https://img.shields.io/github/license/Athlon1600/youtube-downloader.svg)
+
+</center>
+
+# youtube-downloader
+
+This project was inspired by a very popular youtube-dl python package:  
+https://github.com/rg3/youtube-dl
+
+Yes, there are multiple other PHP-based youtube downloaders on the Internet, 
+but most of them haven't been updated in years, or they depend on youtube-dl itself.  
+
+Pure PHP-based youtube downloaders that work, and are **kept-up-to date** just do not exist.
+
+This script uses no Javascript interpreters, no calls to shell... nothing but pure PHP with no heavy dependencies either.
+
+![](https://i.imgur.com/39LIE0r.png)
+
+That's all there is to it!
+
+## :warning: Legal Disclaimer
+
+This program is for personal use only. 
+Downloading copyrighted material without permission is against [YouTube's terms of services](https://www.youtube.com/static?template=terms). 
+By using this program, you are solely responsible for any copyright violations. 
+We are not responsible for people who attempt to use this program in any way that breaks YouTube's terms of services.
+
+## Demo App
+
+This may not work at all times, because YouTube puts a short ban on the server if it receives too many requests from it.
+
+- https://youtube-downloader-v3.herokuapp.com/
+
+![](http://proxynova.s3.us-east-1.amazonaws.com/youtube-downloader-save-video.png)
+
+
+### Deploy your own App
+
+on Heroku:
+
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+
+
+Create a FREE account first if you do not yet have one:  
+https://signup.heroku.com/
+
+Installation
+-------
+
+Recommended way of installing this is via [Composer](http://getcomposer.org):
+
+```bash
+composer require athlon1600/youtube-downloader "^3.0"
+```
+
+Run locally:
+
+```bash
+php -S localhost:8000 -t vendor/athlon1600/youtube-downloader/public
+```
+
+# Previous versions
+
+Instructions for installing & using Version 2 can be found here:  
+https://github.com/Athlon1600/youtube-downloader/tree/2.x
+
+# Usage
+
+
+```php
+use YouTube\YouTubeDownloader;
+use YouTube\Exception\YouTubeException;
+
+$youtube = new YouTubeDownloader();
+
+try {
+    $downloadOptions = $youtube->getDownloadLinks("https://www.youtube.com/watch?v=aqz-KE-bpKQ");
+
+    if ($downloadOptions->getAllFormats()) {
+        echo $downloadOptions->getFirstCombinedFormat()->url;
+    } else {
+        echo 'No links found';
+    }
+
+} catch (YouTubeException $e) {
+    echo 'Something went wrong: ' . $e->getMessage();
+}
+```
+
+`getDownloadLinks` method returns a `DownloadOptions` type object, which holds an array of stream links - some that are audio-only, and some that are both audio and video combined into one.
+
+For typical usage, you are probably interested in dealing with combined streams, for that case, there is the `getCombinedFormats` method.
+
+## Other Features
+
+- Stream YouTube videos directly from your server:
+
+```php
+$youtube = new \YouTube\YouTubeStreamer();
+$youtube->stream('https://r4---sn-n4v7knll.googlevideo.com/videoplayback?...');
+```
+
+
+## How does it work
+
+A more detailed explanation on how to download videos from YouTube will be written soon.
+For now, there is this:  
+
+https://github.com/Athlon1600/youtube-downloader/pull/25#issuecomment-439373506
+
+## Other Links
+
+- https://github.com/Athlon1600/php-curl-file-downloader
+- https://github.com/TeamNewPipe/NewPipeExtractor/blob/d83787a5ca308c4ca4e86e63a8b63c5e7c4708d6/extractor/src/main/java/org/schabi/newpipe/extractor/services/youtube/extractors/YoutubeStreamExtractor.java
+- https://github.com/ytdl-org/youtube-dl/blob/master/youtube_dl/extractor/youtube.py
+
+## To-do list
+
+- Add ability to solve YouTube Captcha and avoid `HTTP 429 Too Many Requests` errors.
+- Add ability to download video and audio streams separately, and merge the two together using ffmpeg. Just like `youtube-dl` does!  
+- Optional command that finds ALL video formats.
+- ~~Fetch additional metadata about the video without using YouTube API.~~

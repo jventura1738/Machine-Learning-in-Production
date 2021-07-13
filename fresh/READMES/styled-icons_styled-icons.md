@@ -1,0 +1,1 @@
+./packages/styled-icons/README.md

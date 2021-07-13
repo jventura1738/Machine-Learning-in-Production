@@ -1,0 +1,100 @@
+= Spring Initializr image:https://ci.spring.io/api/v1/teams/initializr/pipelines/initializr/jobs/build/badge["Build Status", link="https://ci.spring.io/teams/initializr/pipelines/initializr?groups=Build"] image:https://badges.gitter.im/spring-io/initializr.svg[link="https://gitter.im/spring-io/initializr?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge"]
+
+:boot-doc: https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle
+:code: https://github.com/spring-io/initializr/blob/main
+:docs: https://docs.spring.io/initializr/docs/current-SNAPSHOT/reference
+:service: https://github.com/spring-io/start.spring.io
+
+Spring Initializr provides an extensible API to generate JVM-based projects with
+implementations for several common concepts:
+
+* Basic language generation for Java, Kotlin and Groovy.
+* Build system abstraction with implementations for Apache Maven and Gradle.
+* `.gitignore` support.
+* Several hook-points for custom resources generations.
+
+The various options for the projects are expressed in a metadata model that allows you to
+configure the list of dependencies, supported JVM and platform versions, etc.
+
+Spring Initializr also exposes web endpoints to generate an actual project and also
+serve its metadata in a well-known format to allow third-party clients to provide the
+necessary assistance.
+
+A set of optional conventions for Spring Boot projects is provided and are used in our
+production instance at link:https://start.spring.io[]. To better understand how our
+service is configured, you may want to check {service}[the companion project] and, in
+particular, the
+{service}/blob/master/start-site/src/main/resources/application.yml[configuration of our
+instance]. Such configuration is also described in details in the documentation.
+
+NOTE: While Spring Initializr is available on Maven Central, it is still in a pre 1.0
+state and major refactoring are still possible. Check the
+https://github.com/spring-io/initializr/milestones[milestones page] for an overview of the
+changes.
+
+== Installation and Getting Started
+The reference documentation is available in {docs}/html/[HTML format].
+
+
+== Modules
+Spring Initializr has the following modules:
+
+* `initializr-actuator`: optional module to provide additional information and statistics
+on project generation.
+* `initializr-bom`: provides a Bill of Materials for easier dependency management in your
+project.
+* `initializr-docs`: documentation.
+* `initializr-generator`: core project generation library.
+* `initializr-generator-spring`: optional module defining the conventions for a typical
+Spring Boot project. Can be reused or replaced by your own conventions.
+* `initializr-generator-test`: test infrastructure for project generation.
+* `initializr-metadata`: metadata infrastructure for various aspects of the project.
+* `initializr-service-sample`: showcases a basic custom instance.
+* `initializr-version-resolver`: optional module to extract version numbers from an
+arbitrary POM.
+* `initializr-web`: web endpoints for third party clients.
+
+== Supported interfaces
+Spring Initializr can be used as follows:
+
+* On the command-line with {boot-doc}/#cli-init[the Spring Boot CLI] or simply with
+`cURL` or `HTTPie`.
+* In your IDE if you are using STS, IntelliJ IDEA Ultimate, NetBeans (with
+https://github.com/AlexFalappa/nb-springboot[this plugin]) or VSCode (with
+https://github.com/microsoft/vscode-spring-initializr[the `vscode-spring-initializr`
+plugin]).
+* With a custom Web UI (check ours at link:https://start.spring.io[]).
+
+There are other command-line integrations out there and you can also build your own!
+
+== Running your own instance
+You can easily run your own instance. The `initializr-web` modules uses Spring Boot
+so when it is added to a project, it will trigger the necessary auto-configuration to
+deploy the service.
+
+The `initializr-service-sample` showcases a basic custom instance with dedicated metadata.
+
+
+[[build]]
+== Building from Source
+You need Java 1.8 and a bash-like shell.
+
+[[building]]
+=== Building
+Invoke the build at the root of the project:
+
+[indent=0]
+----
+    $ ./mvnw clean install
+----
+
+To generate the docs as well, you should enable the `full` profile:
+
+[indent=0]
+----
+    $ ./mvnw clean install -Pfull
+----
+
+== License
+Spring Initializr is Open Source software released under the
+https://www.apache.org/licenses/LICENSE-2.0.html[Apache 2.0 license].

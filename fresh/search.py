@@ -11,6 +11,7 @@ This script is for searching for repositories by keyword,
 then puts their slugs into a repo list.
 
 HOW TO RUN -> python3 search.py `cat keywords`
+then do    -> sort repo_list | uniq -u > repo_names
 
 -Justin Ventura
 """
