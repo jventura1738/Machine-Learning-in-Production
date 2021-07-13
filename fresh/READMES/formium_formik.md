@@ -1,1 +1,0 @@
-./packages/formik/README.md
