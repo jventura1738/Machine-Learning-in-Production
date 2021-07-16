@@ -107,9 +107,3 @@ def _main():
 # Run script directly:
 if __name__ == '__main__':
     _main()
-
-
-# # Loop through each file in the
-    # for filename in os.listdir(README_PATH):
-    #     with open(os.path.join(README_PATH, filename), 'r') as f:
-    #         print(f.name)
