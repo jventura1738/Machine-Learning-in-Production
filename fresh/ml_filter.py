@@ -3,6 +3,7 @@
 import os
 import sys
 import github
+from code_filter import *
 
 """
 This file filters out repos which do not contain some sort of
@@ -14,7 +15,7 @@ Heuristics:
 # TODO: Need to clone repositories to test out filters.
 
 # NOTE: Path variables
-README_PATH = os.getcwd() + '/READMES'
+README_PATH = os.getcwd() + '/READMES/'
 REPO_PATH = 'textfiles/repo_names'
 REPO_PATH2 = 'textfiles/repo_names2'
 CANDS_PATH = 'textfiles/CANDIDATES/'
@@ -22,7 +23,7 @@ TRASH_PATH = 'textfiles/TRASH/'
 
 # NOTE: Keyword lists:
 KEYWORDS = ['machine learning', 'artificial intelligence',
-            'ai', 'ml', 'deep learning', 'neural net']
+            'deep learning', 'neural net']
 TOPICS = ['machine-learning', 'artificial-intelligence',
           'deeplearning', 'deep-learning',
           'machinelearning', 'neural-networks',
@@ -61,18 +62,28 @@ def topic_filter(topics: str) -> bool:
     else:
         return True if any(kw in topics for kw in TOPICS) else False
 
+
 # This function goes through READMEs to search for
 # sign of machine learning.
 # TRUE: passes filter.
 # FALSE: fails filter.
-def README_filter(README: str) -> bool:
+def readme_filter(mod_repo_name: str) -> bool:
+    try:
+        fptr = open(README_PATH + f'{mod_repo_name + ".md"}')
+        return True if any(kw in fptr.read() for kw in KEYWORDS) else False
+    except FileNotFoundError:
+        print(f'{mod_repo_name}.md does not exist.')
+        return True
+
+
+# IMPORTANT: If all above fails, check through each file in the repo
+# IMPORTANT: code to see if there are signs of a ML model.
+def repo_code_filter(mod_repo_name: str) -> bool:
     pass
 
 
 # Main function:
 def _main():
-
-    dest_file = open(REPO_PATH2, 'a')
 
     # If no additional arguments are passed into the
     # argument vector:
@@ -89,23 +100,24 @@ def _main():
         for filename in curr_file.readlines():
 
             # Initial path here; will be added on to later:
-            mod_repo_name = (filename.strip()).replace('/', '_') + '.txt'
-            details = metadata(mod_repo_name)
+            mod_repo_name = (filename.strip()).replace('/', '_')
+            details = metadata(mod_repo_name + '.txt')
 
             if len(details) != 8:
                 print(f'{filename.strip()} has no metadata.')
                 file_trash.write(filename)
-                continue
-
-            # TODO: Here we will run the filters.
-            if desc_filter(details['description']):
-                file_cands.write(filename)
-            elif topic_filter(details['topics']):
-                file_cands.write(filename)
-            # elif README_filter(details['full_name']):
-            #     file_cands.write(filename)
             else:
-                file_trash.write(filename)
+                # TODO: Here we will run the filters.
+                if desc_filter(details['description']):
+                    file_cands.write(filename)
+                elif topic_filter(details['topics']):
+                    file_cands.write(filename)
+                elif readme_filter(mod_repo_name):
+                    file_cands.write(filename)
+                elif repo_code_filter(mod_repo_name):
+                    file_cands.write(filename)
+                else:
+                    file_trash.write(filename)
 
             # try:
             #     # First, make sure the repo is actually some sort
