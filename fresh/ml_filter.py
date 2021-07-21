@@ -2,17 +2,20 @@
 
 import os
 import sys
+import time
 import github
-from code_filter import *
+import subprocess
+from code_filter import clone_repo, check_code, delete_repo
 
 """
 This file filters out repos which do not contain some sort of
 machine learning aspect.
 
 Heuristics:
+X
+Y
+Z
 """
-
-# TODO: Need to clone repositories to test out filters.
 
 # NOTE: Path variables
 README_PATH = os.getcwd() + '/READMES/'
@@ -23,21 +26,60 @@ TRASH_PATH = 'textfiles/TRASH/'
 
 # NOTE: Keyword lists:
 KEYWORDS = ['machine learning', 'artificial intelligence',
-            'deep learning', 'neural net']
+            'deep learning', 'neural net', 'classifier']
 TOPICS = ['machine-learning', 'artificial-intelligence',
           'deeplearning', 'deep-learning',
           'machinelearning', 'neural-networks',
-          'neural-network']
+          'neural-network', 'classifier', 'classification']
+QUERIES = ['model', 'models', 'classify', 'classifier',
+           'import tensorflow', 'import torch',
+           'layers']
+
+
+# Check if repo has been classified yet:
+def classified(full_name: str):
+    return _cands(full_name) or _trash(full_name)
+
+
+# Sub method for checking the CANDIDATES tree.
+def _cands(full_name: str):
+    # Search in the file for the given repo:
+    search_cmd = ['grep', '-soi'] + [full_name] + [f'{CANDS_PATH}/candidates']
+
+    # If there is no exception, then there was at least one result.
+    try:
+        subprocess.check_output(tuple(search_cmd), text=True)
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
+
+# Sub method for checking the TRASH tree.
+def _trash(full_name: str):
+    # Search in the file for the given repo:
+    search_cmd = ['grep', '-soi'] + [full_name] + [f'{TRASH_PATH}/trash']
+
+    # If there is no exception, then there was at least one result.
+    try:
+        subprocess.check_output(tuple(search_cmd), text=True)
+        return True
+    except subprocess.CalledProcessError:
+        return False
 
 
 # Get metadata from a repo given its modified repo name,
 # in the format owner_reponame.txt.
-def metadata(mod_repo_name):
-    fptr = open(f'METADATA/{mod_repo_name}')
+def metadata(mod_repo_name: str):
+    # Prepare dictionary for metadata:
+    fptr = open(f'METADATA/{mod_repo_name}', 'r')
     meta = dict()
+
+    # Assume specific format (guaranteed by my script):
     for line in fptr.readlines():
         k, v = tuple(line.split(':', 1))
-        meta[k] = v
+        meta[k] = v.strip()
+
+    # Returns dictionary, be wary of defective files.
     return meta
 
 
@@ -46,8 +88,11 @@ def metadata(mod_repo_name):
 # TRUE: passes filter.
 # FALSE: fails filter.
 def desc_filter(desc: str) -> bool:
+    # If no description, move on.
     if desc is None:
         return False
+
+    # Otherwise, check description for keywords:
     else:
         return True if any(kw in desc for kw in KEYWORDS) else False
 
@@ -57,8 +102,11 @@ def desc_filter(desc: str) -> bool:
 # TRUE: passes filter.
 # FALSE: fails filter.
 def topic_filter(topics: str) -> bool:
+    # If no topics, move on.
     if topics is None or len(topics) == 0:
         return False
+
+    # Otherwise, check topics list:
     else:
         return True if any(kw in topics for kw in TOPICS) else False
 
@@ -68,9 +116,13 @@ def topic_filter(topics: str) -> bool:
 # TRUE: passes filter.
 # FALSE: fails filter.
 def readme_filter(mod_repo_name: str) -> bool:
+    # Look for README (if there is one):
     try:
-        fptr = open(README_PATH + f'{mod_repo_name + ".md"}')
+        # Check README.txt file for keywords:
+        fptr = open(README_PATH + f'{mod_repo_name + ".md"}', 'r')
         return True if any(kw in fptr.read() for kw in KEYWORDS) else False
+
+    # If no README, just move on.
     except FileNotFoundError:
         print(f'{mod_repo_name}.md does not exist.')
         return True
@@ -78,8 +130,19 @@ def readme_filter(mod_repo_name: str) -> bool:
 
 # IMPORTANT: If all above fails, check through each file in the repo
 # IMPORTANT: code to see if there are signs of a ML model.
-def repo_code_filter(mod_repo_name: str) -> bool:
-    pass
+def repo_code_filter(full_name: str, clone_url: str) -> bool:
+    # Clone the repository locally:
+    clone_repo(full_name=full_name, clone_url=clone_url)
+
+    # Loop through and query the repo codebase:
+    for q in QUERIES:
+        if check_code(full_name=full_name, query=q) == True:
+            delete_repo(full_name=full_name)
+            return True
+
+    # If no words found the code, return False.
+    delete_repo(full_name=full_name)
+    return False
 
 
 # Main function:
@@ -93,48 +156,71 @@ def _main():
         # NOTE: Collect all slugs:
         curr_file = open(REPO_PATH, 'r')
 
-        file_cands = open('textfiles/CANDIDATES/candidates', 'w')
-        file_trash = open('textfiles/TRASH/trash', 'w')
+        # Destination files:
+        file_cands = open('textfiles/CANDIDATES/candidates', 'a')
+        file_trash = open('textfiles/TRASH/trash', 'a')
 
-        # NOTE: Go through each slug in the repo_names file:
-        for filename in curr_file.readlines():
+        try:
 
-            # Initial path here; will be added on to later:
-            mod_repo_name = (filename.strip()).replace('/', '_')
-            details = metadata(mod_repo_name + '.txt')
+            # NOTE: Go through each slug in the repo_names file:
+            for filename in curr_file.readlines():
+                # Initial path here; will be added on to later:
+                mod_repo_name = (filename.strip()).replace('/', '_')
 
-            if len(details) != 8:
-                print(f'{filename.strip()} has no metadata.')
-                file_trash.write(filename)
-            else:
-                # TODO: Here we will run the filters.
-                if desc_filter(details['description']):
-                    file_cands.write(filename)
-                elif topic_filter(details['topics']):
-                    file_cands.write(filename)
-                elif readme_filter(mod_repo_name):
-                    file_cands.write(filename)
-                elif repo_code_filter(mod_repo_name):
-                    file_cands.write(filename)
+                # Only go through this process if the repository has not
+                # already gone through the filter.
+                if not classified(filename.strip()):
+                    print(f'classifying {filename.strip()}')
+                    details = metadata(mod_repo_name + '.txt')
+
+                    # If there is no metadata:
+                    if len(details) != 8:
+                        print(f'{filename.strip()} has no metadata.')
+                        file_trash.write(filename)
+
+                    # Otherwise:
+                    else:
+                        # Filter based on repository description:
+                        if desc_filter(details['description']):
+                            file_cands.write(filename)
+
+                        # Then check repository topics next:
+                        elif topic_filter(details['topics']):
+                            file_cands.write(filename)
+
+                        # Then check README:
+                        elif readme_filter(mod_repo_name):
+                            file_cands.write(filename)
+
+                        # Final check; clone repository and grep code:
+                        elif repo_code_filter(details['full_name'], details['clone_url']):
+                            file_cands.write(filename)
+
+                        # Otherwise, not machine learning candidate:
+                        else:
+                            file_trash.write(filename)
+
                 else:
-                    file_trash.write(filename)
+                    print(f'{filename.strip()} already classified.')
 
-            # try:
-            #     # First, make sure the repo is actually some sort
-            #     # of project and not a paper or list.
-            #     dest_path += ''
-            #
-            # except github.GithubException as g_err:
-            #     if g_err.status == 404:
-            #         print('README not found, moving on.')
-            #     elif g_err.status == 403:
-            #         print('Rate Limit Exceeded (GitHub)')
-            #         print('5000 req/hr max.')
-            #         exit(1)
+        # Just in case it terminals to a signal:
+        except KeyboardInterrupt:
+            print('Process terminated unexpectedly via signal.')
 
+        # Other issues:
+        except:
+            print('Process terminated unexpectedly, unknown reason.')
+        
+        # Make sure the file was written to:
+        finally:
+            file_cands.close()
+            file_trash.close()
+    
+        # me good programmer
         file_cands.close()
         file_trash.close()
 
+    # TODO: UPDATE THIS PART TO USE ARGV:
     # If the argument vector contains additional arguments:
     else:
         print('Using argument vector to filter:')
@@ -143,7 +229,7 @@ def _main():
         for filename in sys.argv[1:]:
 
             # Initial path here; will be added on to later:
-            dest_path = 'textfiles/'
+            dest_path = f'textfiles/{filename}'
 
             # TODO: Here we will run the filters.
             try:
