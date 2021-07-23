@@ -21,9 +21,11 @@ def clone_repo(full_name: str, clone_url: str) -> None:
     # Log the successful and unsuccessful clones:
     if clone.returncode == 0:
         print(f'{full_name} cloned successfully.')
+        return True
     else:
         print(f'{full_name} clone failed; may exist already.')
         time.sleep(3)
+        return False
 
 
 # Check the code for occurrences of a word:
@@ -37,11 +39,6 @@ def check_code(full_name: str, query: str) -> bool:
     try:
         subprocess.check_output(tuple(search_cmd), text=True)
         return True
-        # Count the number of occurrences by piping `output.`
-        # output = subprocess.check_output(tuple(search_cmd), text=True)
-        # counter = subprocess.run(['wc', '-l'], stdout=subprocess.PIPE, text=True, input=output)
-        # count = int(counter.stdout.strip())
-        # return True if count >= 1 else False
     except subprocess.CalledProcessError:
         return False
 

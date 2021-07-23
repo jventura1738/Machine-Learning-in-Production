@@ -31,18 +31,19 @@ TOPICS = ['machine-learning', 'artificial-intelligence',
           'deeplearning', 'deep-learning',
           'machinelearning', 'neural-networks',
           'neural-network', 'classifier', 'classification']
-QUERIES = ['model', 'models', 'classify', 'classifier',
-           'import tensorflow', 'import torch',
-           'layers']
+FILE_DIR_QUERIES = ['model', 'models', 'model.*', 'classify', 
+                    'classify.*', 'train.*', 'datasets',
+                    'training']
+QUERIES = ['sklearn', 'keras', 'tensorflow', 'torch']
 
 
 # Check if repo has been classified yet:
-def classified(full_name: str):
+def classified(full_name: str) -> bool:
     return _cands(full_name) or _trash(full_name)
 
 
 # Sub method for checking the CANDIDATES tree.
-def _cands(full_name: str):
+def _cands(full_name: str) -> bool:
     # Search in the file for the given repo:
     search_cmd = ['grep', '-soi'] + [full_name] + [f'{CANDS_PATH}/candidates']
 
@@ -55,7 +56,7 @@ def _cands(full_name: str):
 
 
 # Sub method for checking the TRASH tree.
-def _trash(full_name: str):
+def _trash(full_name: str) -> bool:
     # Search in the file for the given repo:
     search_cmd = ['grep', '-soi'] + [full_name] + [f'{TRASH_PATH}/trash']
 
@@ -128,21 +129,55 @@ def readme_filter(mod_repo_name: str) -> bool:
         return True
 
 
+# Check the repository for filenames or directory names which
+# could be indicative of ML/AI.
+def repo_filename_filter(dir_name: str):
+    repo_name = dir_name.split('/')[-1]
+    # Loop through the queries:
+    for query in FILE_DIR_QUERIES:
+        # Commands to find file/dir names matching query:
+        find_cmd = ['find', '-L', f'{repo_name}', '-iname'] + [query]
+        cnt_cmd = ['wc', '-l']
+
+        try:
+            # Pipe results from find to wc to find occurences:
+            out = subprocess.check_output(tuple(find_cmd), text=True)
+            res = subprocess.check_output(tuple(cnt_cmd), input=out, text=True)
+
+            if int(res.strip()) >= 1:
+                return True
+        except subprocess.CalledProcessError:
+            return False
+
+    return False
+
+
 # IMPORTANT: If all above fails, check through each file in the repo
 # IMPORTANT: code to see if there are signs of a ML model.
 def repo_code_filter(full_name: str, clone_url: str) -> bool:
     # Clone the repository locally:
-    clone_repo(full_name=full_name, clone_url=clone_url)
+    if clone_repo(full_name=full_name, clone_url=clone_url):
+        filename = full_name.split('/')[-1]
 
-    # Loop through and query the repo codebase:
-    for q in QUERIES:
-        if check_code(full_name=full_name, query=q) == True:
+        # Check the tree nodes first:
+        if repo_filename_filter(filename.strip()):
             delete_repo(full_name=full_name)
             return True
 
-    # If no words found the code, return False.
-    delete_repo(full_name=full_name)
-    return False
+        # Otherwise:
+        else:
+            # Loop through and query the repo codebase:
+            for q in QUERIES:
+                if check_code(full_name=full_name, query=q) == True:
+                    delete_repo(full_name=full_name)
+                    return True
+
+            # If no words found the code, return False.
+            delete_repo(full_name=full_name)
+            return False
+    else:
+        print('Clone failed :(')
+        time.sleep(10)
 
 
 # Main function:
@@ -192,14 +227,18 @@ def _main():
                         elif readme_filter(mod_repo_name):
                             file_cands.write(filename)
 
-                        # Final check; clone repository and grep code:
-                        elif repo_code_filter(details['full_name'], details['clone_url']):
-                            file_cands.write(filename)
-
-                        # Otherwise, not machine learning candidate:
+                        # This is the sophisticated part of the filter:
                         else:
-                            file_trash.write(filename)
+                            # Check the filenames and directories to hopefully speed up filter.
+                            flag = repo_code_filter(details['full_name'], details['clone_url'])
+                        
+                            if flag is False:
+                                file_trash.write(filename)
+                            else:
+                                file_cands.write(filename)
 
+
+                # Repo has already been classified.
                 else:
                     print(f'{filename.strip()} already classified.')
 
