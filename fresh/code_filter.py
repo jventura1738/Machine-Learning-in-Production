@@ -15,7 +15,7 @@ PATH_TO_METADATA = 'METADATA/'
 # Clone the repository given the metadata file:
 def clone_repo(full_name: str, clone_url: str) -> None:
     # Clone the given repository using the url:
-    clone_cmd = ['git', 'clone'] + [clone_url]
+    clone_cmd = ['git', 'clone', '--depth', '1'] + [clone_url]
     clone = subprocess.run(clone_cmd, text=True)
 
     # Log the successful and unsuccessful clones:

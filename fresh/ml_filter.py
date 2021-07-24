@@ -177,6 +177,7 @@ def repo_code_filter(full_name: str, clone_url: str) -> bool:
             return False
     else:
         print('Clone failed :(')
+        delete_repo(full_name=full_name)
         time.sleep(10)
 
 
