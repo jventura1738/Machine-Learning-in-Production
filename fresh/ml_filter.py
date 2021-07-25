@@ -32,7 +32,7 @@ TOPICS = ['machine-learning', 'artificial-intelligence',
           'machinelearning', 'neural-networks',
           'neural-network', 'classifier', 'classification']
 FILE_DIR_QUERIES = ['model', 'models', 'model.*', 'classify', 
-                    'classify.*', 'train.*', 'datasets',
+                    'classify.*', 'train.*', 'datasets', 'train',
                     'training']
 QUERIES = ['sklearn', 'keras', 'tensorflow', 'torch']
 
