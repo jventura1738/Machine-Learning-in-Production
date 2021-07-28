@@ -48,6 +48,53 @@ def _trash(full_name: str) -> bool:
     # Search in the file for the given repo:
     search_cmd = ['grep', '-soi'] + [full_name] + [f'{TRASH_PATH}/trash2']
 
+    # If there is no exception, then there was at least one result.
+    try:
+        subprocess.check_output(tuple(search_cmd), text=True)
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
+
+# Get metadata from a repo given its modified repo name,
+# in the format owner_reponame.txt.
+def metadata(mod_repo_name: str):
+    # Prepare dictionary for metadata:
+    fptr = open(f'METADATA/{mod_repo_name}', 'r')
+    meta = dict()
+
+    # Assume specific format (guaranteed by my script):
+    for line in fptr.readlines():
+        k, v = tuple(line.split(':', 1))
+        meta[k] = v.strip()
+
+    # Returns dictionary, be wary of defective files.
+    return meta
+
+
+# Filter for repo languages:
+def lang_filter(language: str) -> bool:
+    flag = False
+    if language == 'jupyter notebook':
+        flag = True
+    elif language == 'none':
+        flag = True
+    return flag
+
+
+# Check code ratios:
+def code_size_filter(languages_url: str) -> bool:
+    r = requests.get(languages_url)
+
+    with open('LANG_TEMP/data.json', 'w') as json_file:
+        json_file.write(r.text)
+
+    # Opening JSON file
+    with open('LANG_TEMP/data.json', 'w') as json_file:
+        data = json.load(json_file)
+
+    data = sorted(data, key=lambda x: x[1])
+
 
 # Main Function:
 def _main():
@@ -84,16 +131,11 @@ def _main():
                     # Otherwise:
                     else:
                         # Filter based on repository description:
-                        if desc_filter(details['description']):
-                            file_cands.write(filename)
+                        if lang_filter(details['language']):
+                            file_trash.write(filename)
 
-                        # Then check repository topics next:
-                        elif topic_filter(details['topics']):
-                            file_cands.write(filename)
-
-                        # Then check README:
-                        elif readme_filter(mod_repo_name):
-                            file_cands.write(filename)
+                        if code_size_filter(details['languages_url']):
+                            file_trash.write(filename)
 
                         # This is the sophisticated part of the filter:
                         else:
@@ -125,17 +167,6 @@ def _main():
         # me good programmer
         file_cands.close()
         file_trash.close()
-
-    # r = requests.get('https://api.github.com/repos/stellargraph/stellargraph/languages')
-    # fptr = open('data.json', 'w')
-    # fptr.write(r.text)
-    # fptr.close()
-    #
-    # # Opening JSON file
-    # with open('data.json') as json_file:
-    #     data = json.load(json_file)
-    #
-    # print(data['Python'])
 
 
 # Run script directly:
