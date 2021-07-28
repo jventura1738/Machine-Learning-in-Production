@@ -3,7 +3,6 @@
 import os
 import sys
 import time
-import github
 import subprocess
 from code_filter import clone_repo, check_code, delete_repo
 
@@ -168,7 +167,7 @@ def repo_code_filter(full_name: str, clone_url: str) -> bool:
         else:
             # Loop through and query the repo codebase:
             for q in QUERIES:
-                if check_code(full_name=full_name, query=q) == True:
+                if check_code(full_name=full_name, query=q):
                     delete_repo(full_name=full_name)
                     return True
 
@@ -238,7 +237,6 @@ def _main():
                             else:
                                 file_cands.write(filename)
 
-
                 # Repo has already been classified.
                 else:
                     print(f'{filename.strip()} already classified.')
@@ -260,30 +258,76 @@ def _main():
         file_cands.close()
         file_trash.close()
 
-    # TODO: UPDATE THIS PART TO USE ARGV:
+    # NOTE: This is best for testing.
     # If the argument vector contains additional arguments:
     else:
-        print('Using argument vector to filter:')
 
-        # NOTE: Go through each slug in the argument vector:
-        for filename in sys.argv[1:]:
+        # Destination files:
+        file_cands = open('textfiles/CANDIDATES/candidates', 'a')
+        file_trash = open('textfiles/TRASH/trash', 'a')
 
-            # Initial path here; will be added on to later:
-            dest_path = f'textfiles/{filename}'
+        try:
 
-            # TODO: Here we will run the filters.
-            try:
-                # First, make sure the repo is actually some sort
-                # of project and not a paper or list.
-                dest_path += ''
+            repos = sys.argv[1:]
+            for i, filename in enumerate(repos):
+                # Initial path here; will be added on to later:
+                mod_repo_name = (filename.strip()).replace('/', '_')
 
-            except github.GithubException as g_err:
-                if g_err.status == 404:
-                    print('README not found, moving on.')
-                elif g_err.status == 403:
-                    print('Rate Limit Exceeded (GitHub)')
-                    print('5000 req/hr max.')
-                    exit(1)
+                # Only go through this process if the repository has not
+                # already gone through the filter.
+                if not classified(filename.strip()):
+                    print(f'classifying {filename.strip()}')
+                    details = metadata(mod_repo_name + '.txt')
+
+                    # If there is no metadata:
+                    if len(details) != 8:
+                        print(f'{filename.strip()} has no metadata.')
+                        file_trash.write(filename)
+
+                    # Otherwise:
+                    else:
+                        # Filter based on repository description:
+                        if desc_filter(details['description']):
+                            file_cands.write(filename)
+
+                        # Then check repository topics next:
+                        elif topic_filter(details['topics']):
+                            file_cands.write(filename)
+
+                        # Then check README:
+                        elif readme_filter(mod_repo_name):
+                            file_cands.write(filename)
+
+                        # This is the sophisticated part of the filter:
+                        else:
+                            # Check the filenames and directories to hopefully speed up filter.
+                            flag = repo_code_filter(details['full_name'], details['clone_url'])
+
+                            if flag is False:
+                                file_trash.write(filename)
+                            else:
+                                file_cands.write(filename)
+
+                # Repo has already been classified.
+                else:
+                    print(f'{filename.strip()} already classified.')
+
+        # Just in case it terminals to a signal:
+        except KeyboardInterrupt:
+            print('Process terminated unexpectedly via signal.')
+
+        # Other issues:
+        except:
+            print('Process terminated unexpectedly, unknown reason.')
+
+        # Make sure the file was written to:
+        finally:
+            file_cands.close()
+            file_trash.close()
+
+        # me good programmer
+        file_cands.close()
+        file_trash.close()
 
 
 # Run script directly:
