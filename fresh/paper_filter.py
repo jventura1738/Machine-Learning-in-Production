@@ -74,12 +74,8 @@ def metadata(mod_repo_name: str):
 
 # Filter for repo languages:
 def lang_filter(language: str) -> bool:
-    flag = False
-    if language == 'jupyter notebook':
-        flag = True
-    elif language == 'none':
-        flag = True
-    return flag
+    bad_langs = ['none', 'jupyter notebook', 'tex']
+    return True if language in bad_langs else False
 
 
 # Check code ratios:
@@ -107,8 +103,8 @@ def _main():
         curr_file = open(REPO_PATH, 'r')
 
         # Destination files:
-        file_cands = open('textfiles/CANDIDATES/candidates', 'a')
-        file_trash = open('textfiles/TRASH/trash', 'a')
+        file_cands = open('textfiles/CANDIDATES/candidates2', 'a')
+        file_trash = open('textfiles/TRASH/trash2', 'a')
 
         try:
 
@@ -136,16 +132,6 @@ def _main():
 
                         if code_size_filter(details['languages_url']):
                             file_trash.write(filename)
-
-                        # This is the sophisticated part of the filter:
-                        else:
-                            # Check the filenames and directories to hopefully speed up filter.
-                            flag = repo_code_filter(details['full_name'], details['clone_url'])
-
-                            if flag is False:
-                                file_trash.write(filename)
-                            else:
-                                file_cands.write(filename)
 
                 # Repo has already been classified.
                 else:
