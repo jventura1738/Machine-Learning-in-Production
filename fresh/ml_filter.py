@@ -139,7 +139,7 @@ def repo_filename_filter(dir_name: str):
         cnt_cmd = ['wc', '-l']
 
         try:
-            # Pipe results from find to wc to find occurences:
+            # Pipe results from find to wc to find occurrences:
             out = subprocess.check_output(tuple(find_cmd), text=True)
             res = subprocess.check_output(tuple(cnt_cmd), input=out, text=True)
 

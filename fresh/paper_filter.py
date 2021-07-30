@@ -23,6 +23,7 @@ candidates -> candidates2.
 REPO_PATH = 'textfiles/CANDIDATES/candidates'
 CANDS_PATH = 'textfiles/CANDIDATES/'
 TRASH_PATH = 'textfiles/TRASH/'
+REPO_PATH_TEST = 'test_pool'
 
 
 # Check if repo has been classified yet:
@@ -79,17 +80,24 @@ def lang_filter(language: str) -> bool:
 
 
 # Check code ratios:
-def code_size_filter(languages_url: str) -> bool:
+def code_size_filter(languages_url: str, mod_repo_name: str) -> bool:
     r = requests.get(languages_url)
 
+    # Open the language json file:
     with open('LANG_TEMP/data.json', 'w') as json_file:
         json_file.write(r.text)
 
-    # Opening JSON file
-    with open('LANG_TEMP/data.json', 'w') as json_file:
+    # Load the language json to dict:
+    with open('LANG_TEMP/data.json', 'r') as json_file:
         data = json.load(json_file)
 
-    data = sorted(data, key=lambda x: x[1])
+    # Command to count bytes in readme:
+    byte_cnt_cmd = tuple([f'<READMES/{mod_repo_name}.md', 'wc', '-c'])
+    code_size = sum(data.values())
+    readme_size = subprocess.check_output(byte_cnt_cmd, text=True)
+    ratio = readme_size / code_size
+
+    return True if ratio >= 0.5 else False
 
 
 # Main Function:
@@ -97,14 +105,16 @@ def _main():
 
     # If there are no arguments passed, read from file.
     if len(sys.argv) <= 1:
-        print(f'Using file {REPO_PATH} to filter:')
+        print(f'Using file {REPO_PATH_TEST} to filter:')
 
         # NOTE: Collect all slugs:
-        curr_file = open(REPO_PATH, 'r')
+        curr_file = open(REPO_PATH_TEST, 'r')
 
         # Destination files:
-        file_cands = open('textfiles/CANDIDATES/candidates2', 'a')
-        file_trash = open('textfiles/TRASH/trash2', 'a')
+        # file_cands = open('textfiles/CANDIDATES/candidates2', 'a')
+        # file_trash = open('textfiles/TRASH/trash2', 'a')
+        file_cands = open('test_cands', 'a')
+        file_trash = open('test_trash', 'a')
 
         try:
 
@@ -130,8 +140,12 @@ def _main():
                         if lang_filter(details['language']):
                             file_trash.write(filename)
 
-                        if code_size_filter(details['languages_url']):
+                        # Check for the size of the code base vs README.
+                        elif code_size_filter(details['languages_url'], mod_repo_name):
                             file_trash.write(filename)
+
+                        else:
+                            file_cands.write(filename)
 
                 # Repo has already been classified.
                 else:
@@ -142,8 +156,8 @@ def _main():
             print('Process terminated unexpectedly via signal.')
 
         # Other issues:
-        except:
-            print('Process terminated unexpectedly, unknown reason.')
+        # except:
+        #     print('Process terminated unexpectedly, unknown reason.')
 
         # Make sure the file was written to:
         finally:
