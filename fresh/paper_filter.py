@@ -1,9 +1,11 @@
 # Justin Ventura | Carnegie Mellon University
 
+import os
 import sys
 import json
 import requests
 import subprocess
+from requests.auth import HTTPBasicAuth
 
 """
 This script removes papers, research demos, and other
@@ -81,7 +83,7 @@ def lang_filter(language: str) -> bool:
 
 # Check code ratios:
 def code_size_filter(languages_url: str, mod_repo_name: str) -> bool:
-    r = requests.get(languages_url)
+    r = requests.get(languages_url, auth=HTTPBasicAuth('user', 'pass'))
 
     # Open the language json file:
     with open('LANG_TEMP/data.json', 'w') as json_file:
@@ -91,10 +93,8 @@ def code_size_filter(languages_url: str, mod_repo_name: str) -> bool:
     with open('LANG_TEMP/data.json', 'r') as json_file:
         data = json.load(json_file)
 
-    # Command to count bytes in readme:
-    byte_cnt_cmd = tuple([f'<READMES/{mod_repo_name}.md', 'wc', '-c'])
     code_size = sum(data.values())
-    readme_size = subprocess.check_output(byte_cnt_cmd, text=True)
+    readme_size = os.path.getsize(f'READMES/{mod_repo_name}.md')
     ratio = readme_size / code_size
 
     return True if ratio >= 0.5 else False
@@ -105,16 +105,14 @@ def _main():
 
     # If there are no arguments passed, read from file.
     if len(sys.argv) <= 1:
-        print(f'Using file {REPO_PATH_TEST} to filter:')
+        print(f'Using file {REPO_PATH} to filter:')
 
         # NOTE: Collect all slugs:
-        curr_file = open(REPO_PATH_TEST, 'r')
+        curr_file = open(REPO_PATH, 'r')
 
         # Destination files:
-        # file_cands = open('textfiles/CANDIDATES/candidates2', 'a')
-        # file_trash = open('textfiles/TRASH/trash2', 'a')
-        file_cands = open('test_cands', 'a')
-        file_trash = open('test_trash', 'a')
+        file_cands = open('textfiles/CANDIDATES/candidates2', 'a')
+        file_trash = open('textfiles/TRASH/trash2', 'a')
 
         try:
 
