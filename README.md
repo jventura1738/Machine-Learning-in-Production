@@ -2,7 +2,7 @@
 
 Justin Ventura, Dr. Christian Kaestner
 
-## Getting Started:
+## Getting Started (Under Construction):
 
 Need to get MPI:
 ```bash
@@ -16,4 +16,3 @@ Then MPI4PY:
 ```bash
 pip3 install mpi4py
 ```
-
